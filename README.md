@@ -31,6 +31,8 @@ Here is a basic example of using Musig2 for signing. The steps are as follows:
  * Each signer then creates a session and partial signature.
  * Once all partial signatures are collected, any signer can combine them into the final signature.
 
+Check out [`test/src/demo.test.ts`](test/src/demo.test.ts) for a full reference implementation.
+
 ```tsx
 // Import the package.
 import * as Musig2 from '@cmdcode/musig2'
@@ -52,8 +54,8 @@ import * as Musig2 from '@cmdcode/musig2'
   // Setup a dummy wallet for each signer.
   for (const name of signers) {
     // Generate some random secrets using WebCrypto.
-    const secret = Buff.str(name).digest
-    const nonce  = Buff.join([ secret.digest, secret.digest.digest ])
+    const secret = Musig2.gen.random(32)
+    const nonce  = Musig2.gen.random(64)
     // Create a pair of signing keys.
     const [ sec_key, pub_key     ] = Musig2.gen.key_pair(secret)
     // Create a pair of nonces (numbers only used once).

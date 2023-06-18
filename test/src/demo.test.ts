@@ -23,8 +23,8 @@ export function demo_test (t : Test) {
   // Setup a dummy wallet for each signer.
   for (const name of signers) {
     // Generate some random secrets using WebCrypto.
-    const secret = Buff.str(name).digest
-    const nonce  = Buff.join([ secret.digest, secret.digest.digest ])
+    const secret = Musig2.gen.random(32)  //Buff.str(name).digest
+    const nonce  = Musig2.gen.random(64) //Buff.join([ secret.digest, secret.digest.digest ])
     // Create a pair of signing keys.
     const [ sec_key, pub_key     ] = Musig2.gen.key_pair(secret)
     // Create a pair of nonces (numbers only used once).
