@@ -52,7 +52,7 @@ export function generate_point (
 export function generate_seckey (
   secret : Bytes
 ) : Buff {
-  return Buff.big(generate_field(secret))
+  return Buff.big(generate_field(secret), 32)
 }
 
 export function generate_pubkey (

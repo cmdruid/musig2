@@ -23,7 +23,7 @@ export function assert_N (bytes : Bytes) : void {
     throw new KeyOperationError({
       type   : 'assert_N',
       reason : 'Key out of range.',
-      data   : [ Buff.big(big).hex ]
+      data   : [ Buff.big(big, 32).hex ]
     })
   }
 }
@@ -49,19 +49,12 @@ export function combine_sigs (
   context    : KeyContext,
   signatures : Bytes[]
 ) : Buff {
-  const { challenge, group_pubkey, group_R, tweak } = context
+  const { challenge, group_pubkey, group_R, tacc } = context
   const is_odd = group_pubkey[0] === 3
-
-  console.log('tweak:', tweak)
-
   const s = combine_s(signatures)
   const e = buffer(challenge).big
-  console.log('e:', e)
-  const t = buffer(tweak).big
   const g = (is_odd) ? N - 1n : 1n
-  console.log('combine g:', g)
-  const a = modN(e * g * t)
-  console.log('pre s tweak:', Buff.big(a).hex)
+  const a = e * g * tacc
   const sig = modN(s + a)
 
   // Return the combined signature.

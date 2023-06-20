@@ -32,7 +32,7 @@ export function check_key (
 
 export function mod_key (key : Bytes) : Buff {
   const big = Buff.bytes(key).big
-  return Buff.big(modN(big))
+  return Buff.big(modN(big), 32)
 }
 
 export function negate_point (point : Point) : Point {
@@ -43,7 +43,7 @@ export function negate_point (point : Point) : Point {
 export function negate_key (key : Bytes) : Buff {
   const k = Buff.bytes(key)
   const n = _N - k.big
-  return Buff.big(n)
+  return Buff.big(n, 32)
 }
 
 export function point_x (
@@ -213,7 +213,7 @@ export function to_bytes (
   P : Point,
   xonly : boolean = false
 ) : Buff {
-  const x = Buff.big(P.x)
+  const x = Buff.big(P.x, 32)
   if (xonly) return x
   return (is_even(P))
     ? Buff.join([ 0x02, x ])

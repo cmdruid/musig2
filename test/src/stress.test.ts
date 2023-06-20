@@ -26,8 +26,8 @@ export function stress_test(t : Test) {
 
       if (DEBUG) {
         console.log('pubkey:', pubkey.hex)
-        console.log('pointA:', Buff.big(pointA.x).hex)
-        console.log('pointB:', Buff.big(pointB.x).hex)
+        console.log('pointA:', Buff.big(pointA.x, 32).hex)
+        console.log('pointB:', Buff.big(pointB.x, 32).hex)
         console.log('isevenA:', ECC.is_even(pointA))
         console.log('isevenB:', ECC.is_even(pointB))
         console.log('bytesA:', bytesA.hex)

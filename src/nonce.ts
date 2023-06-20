@@ -70,7 +70,7 @@ export function get_nonce_coeff (
   const bytes  = hashTag('MuSig/noncecoef', preimg)
   // Return bytes as a bigint mod N.
   const coeff  = modN(bytes.big)
-  return Buff.big(coeff)
+  return Buff.big(coeff, 32)
 }
 
 export function combine_nonces (

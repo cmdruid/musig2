@@ -40,15 +40,8 @@ export function get_key_vector (
   // Return the coeff_key hash.
   const vector = hash_key_vector(group_hash, self_key)
   // Return the coefficient mod N.
-  return Buff.big(modN(vector.big))
+  return Buff.big(modN(vector.big), 32)
 }
-
-// function combine_tweaks (
-//   tweaks : Bytes[]
-// ) : Point {
-//   const points = tweaks.map(e => to_point(e))
-//   return add_points(points)
-// }
 
 export function combine_pubkeys (
   pubkeys  : Bytes[]
@@ -121,25 +114,19 @@ export function apply_tweaks (
 
   let Q      = group_P,
       g      = 1n, // Handles negation for current round.
-      gacc   = 1n, // Stores negation from prev round.
-      tacc   = 0n  // Stores the accumulated tweak.
+      gacc   = 1n, // Tracks negation state across rounds.
+      tacc   = 0n  // Stores the accumulated (negated) tweak.
 
   for (const t of ints) {
-    // console.log('prev Q:', to_bytes(Q).hex)
     // If point is odd, g should be negative.
     g = (!is_even(Q)) ? N - 1n : 1n
-    console.log('pubkey g:', g)
     // Invert Q based on g, then add tweak.
     Q = point_add(point_mul(Q, g), point_mul(G, t))
     // Assert that Q is not null.
     assert_point(Q)
     // Store our progress for the next round.
     gacc = modN(g * gacc)
-    tacc = modN(t + (g * tacc))
-    // console.log('g:', g)
-    // console.log('gacc:', gacc)
-    // console.log('tacc:', tacc)
-    // console.log('new Q:', to_bytes(Q).hex)
+    tacc = modN(t + g * tacc)
   }
   return [ Q, gacc, tacc ]
 }

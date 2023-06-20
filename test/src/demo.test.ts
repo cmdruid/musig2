@@ -1,8 +1,5 @@
 import { Test }    from 'tape'
-import { Buff }    from '@cmdcode/buff-utils'
 import * as Musig2 from '../../src/index.js'
-
-const VERBOSE = true
 
 export function demo_test (t : Test) {
 
@@ -14,24 +11,23 @@ export function demo_test (t : Test) {
   const signers = [ 'alice', 'bob', 'carol' ]
   // We'll store each member's wallet in an array.
   const wallets : any[] = []
-  // Let's also add an additional key tweak.
-  const tweak   = Musig2.util.hash_str('Tweak me!')
-  // We can configure our signing session with an options object.
-  const options = { tweaks : [] }
-  // EDIT: Tweaks are currently broken. :-(
+  // Let's also add some additional key tweaks.
+  const tweak1  = Musig2.gen.random()
+  const tweak2  = Musig2.gen.random()
+  const options = { tweaks : [ tweak1, tweak2 ] }
 
   // Setup a dummy wallet for each signer.
   for (const name of signers) {
     // Generate some random secrets using WebCrypto.
-    const secret = Musig2.gen.random(32)  //Buff.str(name).digest
-    const nonce  = Musig2.gen.random(64) //Buff.join([ secret.digest, secret.digest.digest ])
+    const secret = Musig2.gen.random(32)
+    const nonce  = Musig2.gen.random(64)
     // Create a pair of signing keys.
     const [ sec_key, pub_key     ] = Musig2.gen.key_pair(secret)
     // Create a pair of nonces (numbers only used once).
     const [ sec_nonce, pub_nonce ] = Musig2.gen.nonce_pair(nonce)
     // Add the member's wallet to the array.
     wallets.push({
-      name, secret, sec_key, pub_key, sec_nonce, pub_nonce
+      name, sec_key, pub_key, sec_nonce, pub_nonce
     })
   }
 
@@ -47,7 +43,7 @@ export function demo_test (t : Test) {
   const group_sigs = wallets.map(wallet => {
     return Musig2.sign(
       session,
-      wallet.secret,
+      wallet.sec_key,
       wallet.sec_nonce
     )
   })

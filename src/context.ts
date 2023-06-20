@@ -1,17 +1,17 @@
 import { Buff, Bytes }     from '@cmdcode/buff-utils'
 import { MusigOptions }    from './schema/types.js'
 import { DEFAULT_OPT }     from './schema/config.js'
-import { apply_tweaks, combine_pubkeys } from './pubkey.js'
-import { compute_R, get_challenge } from './sign.js'
+import { to_bytes }        from './point.js'
+import { apply_tweaks, combine_pubkeys }   from './pubkey.js'
+import { compute_R, get_challenge }        from './sign.js'
 import { combine_nonces, get_nonce_coeff } from './nonce.js'
-import { to_bytes } from './point.js'
 
 export interface KeyContext {
   pubkeys      : Buff[]
   nonces       : Buff[]
   vectors      : Map<string, Bytes>
-  parity       : bigint
-  tweak        : bigint
+  gacc         : bigint
+  tacc         : bigint
   internal_key : Buff
   group_pubkey : Buff
   group_nonce  : Buff
@@ -28,10 +28,10 @@ export function get_key_context (
   options : Partial<MusigOptions> = {}
 ) : KeyContext {
   const opt = { ...DEFAULT_OPT, ...options }
-  const [ P, vectors ] = combine_pubkeys(pubkeys)
-  const [ Q, parity, tweak ] = apply_tweaks(P, opt.tweaks)
+  const [ gP, vectors ] = combine_pubkeys(pubkeys)
+  const [ Q, gacc, tacc ] = apply_tweaks(gP, opt.tweaks)
   const group_pubkey = to_bytes(Q)
-  const internal_key = to_bytes(P)
+  const internal_key = to_bytes(gP)
   const group_nonce  = combine_nonces(nonces, opt)
   const nonce_vector = get_nonce_coeff(group_nonce, group_pubkey, message)
   const group_R      = compute_R(group_nonce, nonce_vector)
@@ -39,8 +39,8 @@ export function get_key_context (
 
   return {
     vectors,
-    parity,
-    tweak,
+    gacc,
+    tacc,
     internal_key,
     group_pubkey,
     group_nonce,

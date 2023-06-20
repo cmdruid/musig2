@@ -29,24 +29,6 @@ export function get_challenge (
   return hashTag('BIP0340/challenge', preimg)
 }
 
-// export function should_negate (
-//   keys : Bytes[]
-// ) : boolean {
-//   let bool = false
-//   keys.forEach(key => {
-//     let k = Buff.bytes(key)
-//     if (k.length === 32) {
-//       k = generate_pubkey(k, false)
-//     }
-//     assert_size(k, 33)
-//     if (k[0] === 3) {
-//       bool = !bool
-//     }
-//     console.log('should negate:', bool, k.hex)
-//   })
-//   return bool
-// }
-
 export function compute_R (
   group_nonce : Bytes,
   nonce_coeff : Bytes
@@ -106,22 +88,16 @@ export function sign (
   sec_nonce : Bytes
 ) : Buff {
   // Unpack the context we will use.
-  const { challenge, group_pubkey, nonce_vector, group_R, parity, vectors } = context
+  const { challenge, group_pubkey, nonce_vector, group_R, gacc, vectors } = context
   // Load secret key into buffer.
   const [ sec, pub ] = generate_keys(secret)
-  console.log('sec:', sec.hex)
-  console.log('pub:', pub.hex)
   // Get the vector for our pubkey.
   const p_v = get_vector(vectors, pub).big
   // Negate our private key if needed.
-  console.log('group_pubkey:', group_pubkey.hex)
   const odd = group_pubkey[0] === 3
-  console.log('odd:', odd)
   const g   = (odd) ? N - 1n : 1n
-  console.log('sign g:', g)
-  const sk  = modN(g * parity * sec.big)
+  const sk  = modN(g * gacc * sec.big)
   const cha = buffer(challenge).big
-  console.log('e:', cha)
   const n_v = buffer(nonce_vector).big
   // Parse nonce values into an array.
   const sn  = parse_keys(sec_nonce).map(e => {
