@@ -1,4 +1,5 @@
 import { Test }    from 'tape'
+import { schnorr } from '@noble/curves/secp256k1'
 import * as Musig2 from '../../src/index.js'
 
 export function demo_test (t : Test) {
@@ -52,13 +53,19 @@ export function demo_test (t : Test) {
   const signature = Musig2.combine.sigs(session, group_sigs)
 
   // Check if the signature is valid.
-  const isValid = Musig2.verify.sig (
+  const isValid1 = Musig2.verify.sig (
     session,
     signature
   )
 
+  // BONUS: Check if the signature is valid using an independent library.
+  const { group_pubkey } = session
+  const pubkey   = group_pubkey.slice(1)
+  const isValid2 = schnorr.verify(signature, message, pubkey)
+
   t.test('Testing example demo.', t => {
-    t.plan(1)
-    t.true(isValid, 'The test demo should produce a valid signature.')
+    t.plan(2)
+    t.true(isValid1, 'The test demo should produce a valid signature.')
+    t.true(isValid2, 'The signature should validate using another library.')
   })
 }

@@ -49,9 +49,9 @@ import * as Musig2 from '@cmdcode/musig2'
 const encoder = new TextEncoder()
 const message = encoder.encode('Hello world!')
 
-// Let's create an example list of signers.
-const signers = [ 'alice', 'bob', 'carol' ]
-// We'll store each member's wallet in an array.
+// Let's create an example list of signing members.
+const members = [ 'alice', 'bob', 'carol' ]
+// We'll store each member's keys in an array.
 const wallets : any[] = []
 // Let's also add some additional key tweaks.
 const tweak1  = Musig2.gen.random()
@@ -59,13 +59,13 @@ const tweak2  = Musig2.gen.random()
 const options = { tweaks : [ tweak1, tweak2 ] }
 
 // Setup a dummy wallet for each signer.
-for (const name of signers) {
+for (const name of members) {
   // Generate some random secrets using WebCrypto.
   const secret = Musig2.gen.random(32)
   const nonce  = Musig2.gen.random(64)
   // Create a pair of signing keys.
   const [ sec_key, pub_key     ] = Musig2.gen.key_pair(secret)
-  // Create a pair of nonces (numbers only used once).
+  // Create a pair of nonce values (numbers only used once).
   const [ sec_nonce, pub_nonce ] = Musig2.gen.nonce_pair(nonce)
   // Add the member's wallet to the array.
   wallets.push({
@@ -94,15 +94,26 @@ const group_sigs = wallets.map(wallet => {
 const signature = Musig2.combine.sigs(session, group_sigs)
 
 // Check if the signature is valid.
-const isValid = Musig2.verify.sig (
+const isValid1 = Musig2.verify.sig (
   session,
   signature
 )
 ```
 
+You can also verify the signature using an independent cryptography library, such as the excellent [@noble/curves](https://github.com/paulmillr/noble-curves) library by Paul Miller.
+
+```ts
+// BONUS: Check if the signature is valid using an independent library.
+import { schnorr } from '@noble/curves/secp256k1'
+
+const { group_pubkey } = session
+const pubkey   = group_pubkey.slice(1)
+const isValid2 = schnorr.verify(signature, message, pubkey)
+```
+
 ## Development / Testing
 
-This library uses `yarn` for package management and `vite` for a development / demo server.
+This library uses `yarn` for package management.
 
 ```bash
 ## Clean up any old builds.
