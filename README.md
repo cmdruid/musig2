@@ -13,13 +13,22 @@ More documentation coming soon!
 
 ## Import
 
-This package is available on NPM for easy import:
+This package is available on NPM for easy import into your nodejs or browser-based project:
 
 ```bash
-# Using NPM
+# Node via NPM:
 npm install @cmdcode/musig2
-# Using Yarn
+# Node via Yarn:
 yarn add @cmdcode/musig2
+```
+Example import as an ES module:
+```ts
+import * as Musig2 from '@cmdcode/musig2'
+```
+Example import into a browser-based project:
+```html
+<script src="https://unpkg.com/@cmdcode/musig2"></script>
+<script> const Musig2 = window.musig2 </script>
 ```
 
 ## Basic Usage

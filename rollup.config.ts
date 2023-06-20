@@ -4,7 +4,7 @@ import nodeResolve from '@rollup/plugin-node-resolve'
 import commonjs    from '@rollup/plugin-commonjs'
 import terser      from '@rollup/plugin-terser'
 
-const libraryName = 'cryptoUtils'
+const libraryName = 'musig2'
 
 const treeshake = {
 	moduleSideEffects: false,
