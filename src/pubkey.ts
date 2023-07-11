@@ -8,11 +8,7 @@ import {
   point_x,
   point_add,
   point_mul,
-  assert_point,
-  is_even,
-  N,
-  mod_key,
-  G
+  assert_point
 } from './point.js'
 
 function hash_keys (
@@ -103,30 +99,4 @@ export function get_vector (
     })
   }
   return Buff.bytes(pkv)
-}
-
-export function apply_tweaks (
-  group_P : Point,
-  tweaks  : Bytes[]
-) : [ ext_P : Point, parity: bigint, tweak : bigint ] {
-  // Convert our tweaks to integers.
-  const ints = tweaks.map(e => mod_key(e).big)
-
-  let Q      = group_P,
-      g      = 1n, // Handles negation for current round.
-      gacc   = 1n, // Tracks negation state across rounds.
-      tacc   = 0n  // Stores the accumulated (negated) tweak.
-
-  for (const t of ints) {
-    // If point is odd, g should be negative.
-    g = (!is_even(Q)) ? N - 1n : 1n
-    // Invert Q based on g, then add tweak.
-    Q = point_add(point_mul(Q, g), point_mul(G, t))
-    // Assert that Q is not null.
-    assert_point(Q)
-    // Store our progress for the next round.
-    gacc = modN(g * gacc)
-    tacc = modN(t + g * tacc)
-  }
-  return [ Q, gacc, tacc ]
 }

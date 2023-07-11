@@ -1,8 +1,8 @@
-import { Buff, Bytes }     from '@cmdcode/buff-utils'
-import { modN, pow }       from './math.js'
-import { get_vector }      from './pubkey.js'
-import { generate_keys }   from './generate.js'
-import { KeyContext }      from './context.js'
+import { Buff, Bytes }   from '@cmdcode/buff-utils'
+import { modN, pow }     from './math.js'
+import { get_vector }    from './pubkey.js'
+import { generate_keys } from './generate.js'
+import { KeyContext }    from './context.js'
 import { buffer, hashTag, parse_keys } from './utils.js'
 
 import {
@@ -12,7 +12,6 @@ import {
   point_add,
   point_mul,
   assert_point,
-  to_bytes,
   parse_x
 } from './point.js'
 
@@ -32,7 +31,7 @@ export function get_challenge (
 export function compute_R (
   group_nonce : Bytes,
   nonce_coeff : Bytes
-) : Buff {
+) : Point {
   // Read our data into buffer.
   const nonces = parse_keys(group_nonce)
   const ncoeff = Buff.bytes(nonce_coeff)
@@ -54,7 +53,7 @@ export function compute_R (
   // Asset R is not null.
   assert_point(R)
   // Return x value of R.
-  return to_bytes(R)
+  return R
 }
 
 export function compute_s (
@@ -88,21 +87,18 @@ export function sign (
   sec_nonce : Bytes
 ) : Buff {
   // Unpack the context we will use.
-  const { challenge, group_pubkey, nonce_vector, group_R, gacc, vectors } = context
+  const { challenge, nonce_vector, R_state, key_state, key_parity, vectors } = context
   // Load secret key into buffer.
   const [ sec, pub ] = generate_keys(secret)
   // Get the vector for our pubkey.
   const p_v = get_vector(vectors, pub).big
-  // Negate our private key if needed.
-  const odd = group_pubkey[0] === 3
-  const g   = (odd) ? N - 1n : 1n
-  const sk  = modN(g * gacc * sec.big)
+  const sk  = modN(key_parity * key_state * sec.big)
   const cha = buffer(challenge).big
   const n_v = buffer(nonce_vector).big
   // Parse nonce values into an array.
   const sn  = parse_keys(sec_nonce).map(e => {
     // Negate our nonce values if needed.
-    return (group_R[0] === 3) ? N - e.big : e.big
+    return  R_state * e.big
   })
   // Return partial signature.
   return compute_s(sk, p_v, cha, sn, n_v)

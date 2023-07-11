@@ -1,6 +1,4 @@
 import { Buff, Bytes }       from '@cmdcode/buff-utils'
-import { DEFAULT_OPT }       from './schema/config.js'
-import { MusigOptions }      from './schema/types.js'
 import { KeyOperationError } from './error.js'
 import { modN }              from './math.js'
 
@@ -74,11 +72,8 @@ export function get_nonce_coeff (
 }
 
 export function combine_nonces (
-  pub_nonces : Bytes[],
-  options    : Partial<MusigOptions> = {}
+  pub_nonces : Bytes[]
 ) : Buff {
-  // Apply default options.
-  const opt = { ...DEFAULT_OPT, ...options }
   // Check that all nonces are valid.
   check_nonces(pub_nonces)
   // Get key data from first nonce.
@@ -104,16 +99,9 @@ export function combine_nonces (
       group_R = point_add(group_R, point)
     }
     if (group_R === null) {
-      if (!opt.strict) {
-        // From spec: there is at least one dishonest signer (except with negligible probability).
-        // Continue with arbitrary use of point G so the dishonest signer can be caught later
-        group_R = G
-      } else {
-        throw new KeyOperationError({
-          type   : 'nonce_round',
-          reason : 'End of round R value is null.'
-        })
-      }
+      // From spec: there is at least one dishonest signer (except with negligible probability).
+      // Continue with arbitrary use of point G so the dishonest signer can be caught later
+      group_R = G
     }
     // Store our R value for the round.
     nonces.push(group_R)

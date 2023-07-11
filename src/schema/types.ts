@@ -1,4 +1,10 @@
-import { Bytes } from '@cmdcode/buff-utils'
+import {
+  Buff  as BuffType,
+  Bytes as BytesType
+} from '@cmdcode/buff-utils'
+
+export type Buff  = BuffType
+export type Bytes = BytesType
 
 interface Return<T> {
   ok   : true
@@ -17,8 +23,3 @@ interface Warn<T> extends Return<T> {
 }
 
 export type OpReturn<T = string> = Return<T> | Fail<T> | Warn<T>
-
-export interface MusigOptions {
-  strict  : boolean
-  tweaks ?: Bytes[]
-}

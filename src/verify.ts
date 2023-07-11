@@ -49,12 +49,11 @@ export function combine_sigs (
   context    : KeyContext,
   signatures : Bytes[]
 ) : Buff {
-  const { challenge, group_pubkey, group_R, tacc } = context
-  const is_odd = group_pubkey[0] === 3
-  const s = combine_s(signatures)
-  const e = buffer(challenge).big
-  const g = (is_odd) ? N - 1n : 1n
-  const a = e * g * tacc
+  const { challenge, key_parity, group_R, key_tweak } = context
+
+  const s   = combine_s(signatures)
+  const e   = challenge.big
+  const a   = e * key_parity * key_tweak
   const sig = modN(s + a)
 
   // Return the combined signature.

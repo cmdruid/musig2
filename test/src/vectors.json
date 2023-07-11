@@ -40,7 +40,7 @@
     "chall_mesg"  : "68656c6c6f20776f726c640a",
     "chall_hash"  : "a38ab805b60b6c82f1716002003a822918159a7529519ee933ca0a0f91def3ca",
     "group_sig"   : "60007b9a1f51fcbb53c7b58eae6af1a46b68462db524971a5661262f73a79aa0",
-    "opt"         : { "strict": true }
+    "opt"         : {}
   },
   {
     "comment": "Test vector with deterministic seeds [ alice, bob, carol ]",
@@ -83,6 +83,6 @@
     "chall_mesg"  : "48656c6c6f20776f726c6421",
     "chall_hash"  : "53fb5c22361a522b57d6a74a73841367ba36b55f420638edabdc8f1e38712b01",
     "group_sig"   : "bb89a862d7bb8c4128876570bef2dbdc3abce64bfd063878f72fd213fb30041c",
-    "opt"         : { "strict": true }
+    "opt"         : {}
   }
 ]

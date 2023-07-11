@@ -15,7 +15,7 @@ export function demo_test (t : Test) {
   // Let's also add some additional key tweaks.
   const tweak1  = Musig2.gen.random()
   const tweak2  = Musig2.gen.random()
-  const options = { tweaks : [ tweak1, tweak2 ] }
+  const options = { tweaks : [ tweak1, tweak2 ], commit_tweaks: false }
 
   // Setup a dummy wallet for each signer.
   for (const name of signers) {

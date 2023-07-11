@@ -1,6 +1,6 @@
 import { Buff, Bytes } from '@cmdcode/buff-utils'
 import { modN }        from './math.js'
-import { assert_size, parse_keys }  from './utils.js'
+import { assert_size, parse_keys } from './utils.js'
 
 import {
   G,
@@ -20,7 +20,7 @@ export function generate_random (size = 64) : Buff {
 
 export function generate_field (
   secret : Bytes,
-  force_even_y : boolean = false
+  even_y : boolean = false
 ) : bigint {
   // Load secret into buffer.
   const sec = Buff.bytes(secret)
@@ -30,7 +30,7 @@ export function generate_field (
   if (sk <= 0n || sk >= N) {
     throw new TypeError('Secret key must be within the field N!')
   }
-  if (force_even_y) {
+  if (even_y) {
     const P = point_mul(G, sk)
     assert_point(P)
     if (!is_even(P)) {
@@ -50,9 +50,10 @@ export function generate_point (
 }
 
 export function generate_seckey (
-  secret : Bytes
+  secret : Bytes,
+  xonly ?: boolean
 ) : Buff {
-  return Buff.big(generate_field(secret), 32)
+  return Buff.big(generate_field(secret, xonly), 32)
 }
 
 export function generate_pubkey (

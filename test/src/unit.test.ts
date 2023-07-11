@@ -91,8 +91,9 @@ function nonce_coeff_test (t : Test, v : Vector) {
 }
 
 function compute_R_test (t : Test, v : Vector) {
-  const { group_nonce, nonce_coeff, group_R, opt } = v
-  const ret = compute_R(group_nonce, nonce_coeff)
+  const { group_nonce, nonce_coeff, group_R } = v
+  const R = compute_R(group_nonce, nonce_coeff)
+  const ret = to_bytes(R)
   t.test('compute_R_test', t => {
     t.plan(1)
     t.equal(ret.slice(1).hex, group_R, 'R.x value hex should match.')
