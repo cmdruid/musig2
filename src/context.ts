@@ -1,68 +1,99 @@
-import { N, is_even, to_bytes } from './point.js'
-import { combine_pubkeys }      from './pubkey.js'
-import { apply_tweaks }         from './tweak.js'
-import { buffer }               from './utils.js'
-import { compute_R, get_challenge }        from './sign.js'
-import { combine_nonces, get_nonce_coeff } from './nonce.js'
+import { Buff, Bytes }     from '@cmdcode/buff-utils'
+import { math, point }     from '@cmdcode/crypto-utils'
+import { combine_pubkeys } from './pubkey.js'
+import { apply_tweaks }    from './tweak.js'
 
 import {
-  apply_defaults,
-  Buff,
-  Bytes,
+  compute_R,
+  get_challenge
+} from './compute.js'
+
+import {
+  combine_nonces,
+  get_nonce_coeff,
+  get_shared_nonces
+} from './nonce.js'
+
+import {
+  musig_config,
   MusigConfig,
-  MusigOptions
+  MusigSession
 } from './schema/index.js'
 
-export interface KeyContext {
-  pubkeys      : Buff[]
-  nonces       : Buff[]
-  vectors      : Map<string, Bytes>
-  R_state      : bigint
-  key_parity   : bigint
-  key_state    : bigint
-  key_tweak    : bigint
-  internal_key : Buff
-  group_pubkey : Buff
-  group_nonce  : Buff
-  nonce_vector : Buff
-  group_R      : Buff
-  challenge    : Buff
-  options      : MusigOptions
-}
+const { CONST } = math
 
-export function get_key_context (
+export function get_context (
   pubkeys  : Bytes[],
   nonces   : Bytes[],
   message  : Bytes,
   options ?: MusigConfig
-) : KeyContext {
-  const opt = apply_defaults(options)
+) : MusigSession {
+  const opt = musig_config(options)
   const { tweaks } = opt
-  const [ gP, vectors ] = combine_pubkeys(pubkeys)
-  const [ Q, parity, state, tweak ] = apply_tweaks(gP, tweaks)
-  const group_pubkey = to_bytes(Q)
-  const internal_key = to_bytes(gP)
+  const [ int_pt, key_vectors ]    = combine_pubkeys(pubkeys)
+  const { point: twk_pt, ...rest } = apply_tweaks(int_pt, tweaks)
+  const int_pubkey   = point.to_bytes(int_pt)
+  const group_pubkey = point.to_bytes(twk_pt)
   const group_nonce  = combine_nonces(nonces)
   const nonce_vector = get_nonce_coeff(group_nonce, group_pubkey, message)
   const R            = compute_R(group_nonce, nonce_vector)
-  const R_state      = (!is_even(R)) ? N - 1n : 1n
-  const group_R      = to_bytes(R)
-  const challenge    = get_challenge(group_R, group_pubkey, message)
+  const R_state      = (!point.is_even(R)) ? CONST.N - 1n : 1n
+  const group_rx     = point.to_bytes(R)
+  const challenge    = get_challenge(group_rx, group_pubkey, message)
 
-  return {
-    vectors,
-    internal_key,
+  const session = {
+    ...rest,
+    key_vectors,
+    int_pubkey,
     group_pubkey,
     group_nonce,
     nonce_vector,
-    group_R,
+    group_rx,
     challenge,
     R_state,
-    key_parity : parity,
-    key_state  : state,
-    key_tweak  : tweak,
-    pubkeys    : pubkeys.map(e => buffer(e)),
-    nonces     : nonces.map(e => buffer(e)),
-    options    : opt
+    pub_keys   : pubkeys.map(e => Buff.bytes(e)),
+    pub_nonces : nonces.map(e => Buff.bytes(e)),
+    options    : opt,
+    to_hex     : () => hexify(session)
   }
+
+  return session
+}
+
+export function get_shared_ctx (
+  pubkeys     : Bytes[],
+  self_seckey : Bytes,
+  peer_pubkey : Bytes,
+  message     : Bytes,
+  options    ?: MusigConfig
+) : [ session : MusigSession, sec_nonce : Buff ] {
+  const nonce_ctx = get_shared_nonces(self_seckey, peer_pubkey, message)
+  const [ sec_nonce, pub_nonce, alt_nonce ] = nonce_ctx
+  const nonces  = [ pub_nonce, alt_nonce ]
+  const session = get_context(pubkeys, nonces, message, options)
+  return [ session, sec_nonce ]
+}
+
+function hexify (
+  session : MusigSession
+) : MusigSession {
+  const obj : any = {}
+  for (const k in session) {
+    const key = k as keyof MusigSession
+    const val = session[key]
+    if (Array.isArray(val)) {
+      obj[key] = val.map(e => {
+        if (Array.isArray(e)) {
+          return e.map(x => (x instanceof Buff) ? x.hex : x)
+        } else if (e instanceof Buff) {
+          return e.hex
+        } else {
+          return e
+        }
+      })
+    } else if (val instanceof Buff) {
+      obj[key] = val.hex
+    }
+  }
+  return obj as MusigSession
 }

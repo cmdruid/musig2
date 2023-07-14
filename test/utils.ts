@@ -1,14 +1,15 @@
-import { Buff }       from '@cmdcode/buff-utils'
-import { schnorr }    from '@cmdcode/crypto-utils'
-import * as Musig2    from '../src/index.js'
-import { KeyContext } from '../src/context.js'
+import { Buff }         from '@cmdcode/buff-utils'
+import { noble }        from '@cmdcode/crypto-utils'
+import * as Musig2      from '../src/index.js'
+import { MusigSession } from '../src/index.js'
 
 import {
   MusigConfig,
   MusigOptions,
-  apply_defaults
+  musig_config
 } from '../src/schema/config.js'
-import { to_bytes } from '../src/point.js'
+
+import { to_bytes } from '../src/ecc/point.js'
 
 interface Wallet {
   name      : string
@@ -22,14 +23,14 @@ export class MusigTest {
   readonly signatures : string[]
   readonly wallets    : Wallet[]
 
-  _session ?: KeyContext
+  _session ?: MusigSession
   options   : MusigOptions
 
   constructor (
     signers : string[], 
     config ?: MusigConfig
   ) {
-    this.options    = apply_defaults(config)
+    this.options    = musig_config(config)
     this.signatures = []
     this.wallets    = []
 
@@ -38,9 +39,9 @@ export class MusigTest {
       const secret = Buff.str(name).digest
       const nonce  = Buff.join([secret.digest, secret.digest.digest])
       // Create a pair of signing keys.
-      const [ sec_key, pub_key     ] = Musig2.gen.key_pair(secret)
+      const [ sec_key, pub_key     ] = Musig2.ecc.get_keypair(secret)
       // Create a pair of nonces (numbers only used once).
-      const [ sec_nonce, pub_nonce ] = Musig2.gen.nonce_pair(nonce)
+      const [ sec_nonce, pub_nonce ] = Musig2.ecc.get_nonce_pair(nonce)
       // Add the member's wallet to the array.
       this.wallets.push({
         name,
@@ -65,14 +66,14 @@ export class MusigTest {
     return this.wallets.map(e => e.pub_nonce)
   }
 
-  get session () : KeyContext {
+  get session () : MusigSession {
     if (this._session === undefined) {
       throw new Error('Session undefined!')
     }
     return this._session
   }
 
-  get state () : KeyContext {
+  get state () : MusigSession {
     const payload = {}
     for (const key in this.session) {
       const value  = this.session[key]
@@ -86,16 +87,16 @@ export class MusigTest {
         payload[key] = value
       }
     }
-    return payload as KeyContext
+    return payload as MusigSession
   }
 
   get signature () : string {
     const { session, signatures } = this
-    return Musig2.combine.sigs(session, signatures).hex
+    return Musig2.calc.signature(session, signatures).hex
   }
 
-  get_session (message : string) : KeyContext {
-    return Musig2.combine.keys(
+  get_session (message : string) : MusigSession {
+    return Musig2.ctx.get_session(
       this.keys,
       this.nonces,
       message,
@@ -108,12 +109,12 @@ export class MusigTest {
     config ?: MusigConfig
   ) : string {
     this.options  = (config !== undefined)
-      ? apply_defaults(config)
+      ? musig_config(config)
       :this.options
     this._session = this.get_session(message)
     for (const wallet of this.wallets) {
       this.signatures.push(
-        Musig2.sign (
+        Musig2.musign (
           this.session,
           wallet.sec_key,
           wallet.sec_nonce
@@ -125,7 +126,7 @@ export class MusigTest {
 
   verify (signature ?: string) : boolean {
     const sig = signature ?? this.signature
-    return Musig2.verify.sig(this.session, sig)
+    return Musig2.verify.musig(this.session, sig)
   }
 
   verify2 (message : string) : boolean {
@@ -134,7 +135,7 @@ export class MusigTest {
       throw new Error('Group pubkey is undefined!')
     }
     const pub = group_pubkey.slice(1)
-    return schnorr.verify(
+    return noble.schnorr.verify(
       this.signature,
       message,
       pub

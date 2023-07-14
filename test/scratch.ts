@@ -1,106 +1,100 @@
-import { Buff }      from '@cmdcode/buff-utils'
-import { SecretKey } from '@cmdcode/crypto-utils'
-import { MusigTest } from './utils.js'
+import { Bytes }   from '@cmdcode/buff-utils'
+import { schnorr } from '@noble/curves/secp256k1'
+import * as Musig2 from '../src/index.js'
+import { hexify } from '../src/utils.js'
 
-import {
-  Address,
-  Signer,
-  Tap,
-  Tx
-} from '@cmdcode/tapscript'
+// Encode an example string as bytes.
+const encoder = new TextEncoder()
+const message = encoder.encode('Hello world!')
 
-const signers = [ 'alice', 'bob', 'carol' ]
-const fee     = 1000
-const height  = 2
-const sec_key = new SecretKey('38d0a316ba776d6d2d7efba7f190b2a367b66bb7d6c5a40e174e237e9f725140')
-const pub_key = sec_key.pub.x.hex
+// Let's create an example list of signers.
+const signers = [ 'alice', 'bob' ]
+// We'll store each member's wallet in an array.
+const wallets : any[] = []
+// Let's also add some additional key tweaks.
+const tweak1  = Musig2.gen.seckey()
+const tweak2  = Musig2.gen.seckey()
+const options = { tweaks : [ tweak1, tweak2 ], commit_tweaks: false }
 
-// Set the refund address to sweep.
-const payout_address = 'bcrt1q6hwsrytc4njh09cx2jm07l0xfwff78c2mj5yp5'
-const sweep_address  = 'bcrt1qgm05c5p6040u6428wrq5ag5jplhthpm9glu5y6'
-
-// Set the UTXO details.
-const utxo = {
-  txid  : '8b96b6ed8d96c7ab148eaa92da5bced0230aa584f37279b8670ad4eede213ad9',
-  vout  : 1,
-  prevout : {
-    value : 100_000,
-    scriptPubKey : [ 'OP_1', pub_key ]
-  }
+// Setup a dummy wallet for each signer.
+for (const name of signers) {
+  // Generate some random secrets using WebCrypto.
+  const secret = Musig2.util.random(32)
+  const nonce  = Musig2.util.random(32)
+  // Create a pair of signing keys.
+  const [ sec_key, pub_key     ] = Musig2.ecc.get_keypair(secret, true)
+  // Create a pair of nonces (numbers only used once).
+  const [ sec_nonce, pub_nonce ] = Musig2.ecc.get_keypair(nonce, false, false)
+  // Add the member's wallet to the array.
+  wallets.push({
+    name, sec_key, pub_key, sec_nonce, pub_nonce
+  })
 }
 
-const musig   = new MusigTest(signers)
-const pubkey  = musig.group_key
+// Get wallets
+const a_wallet = wallets.find(e => e.name === 'alice')
+const b_wallet = wallets.find(e => e.name === 'bob')
 
-const scripts = [
-  [ height, 'OP_CHECKSEQUENCEVERIFY', 'OP_DROP', pub_key, 'OP_CHECKSIG' ],
-  [ pubkey, 'OP_CHECKSIG' ]
-]
+// Collect public keys and nonces from all signers.
+const group_keys = wallets.map(e => e.pub_key)
 
-const leaves  = scripts.map(e => Tap.encodeScript(e))
-const refund  = scripts[0]
-const taproot = Tap.tree.getRoot(leaves)
-const tweak   = Tap.tweak.getTweak(pubkey, taproot)
-const [ tapkey, cblock ] = Tap.getPubKey(pubkey, { target: Tap.encodeScript(refund) })
-const [ ______, pblock ] = Tap.getPubKey(pubkey, { target: Tap.encodeScript(pubkey) })
+const a_sess = Musig2.calc.shared_nonce(a_wallet.sec_nonce, b_wallet.pub_nonce, message)
+const b_sess = Musig2.calc.shared_nonce(b_wallet.sec_nonce, a_wallet.pub_nonce, message)
 
-const deposit_tx = Tx.create({
-  vin  : [ utxo ],
-  vout : [{
-    value : utxo.prevout.value - fee,
-    scriptPubKey : [ 'OP_1', tapkey ]
-  }]
-})
+console.log(hexify(a_sess))
+console.log(hexify(b_sess))
 
-const utxo_sig =  Signer.taproot.sign(sec_key, deposit_tx, 0)
-deposit_tx.vin[0].witness = [ utxo_sig ]
+// Combine all your collected keys into a signing session.
+const [ a_session, a_secnonce ] = Musig2.ctx.get_shared (
+  group_keys, 
+  a_wallet.sec_nonce,
+  b_wallet.pub_nonce,
+  message, 
+  options
+)
 
-const deposit_utxo = {
-  txid      : Tx.util.getTxid(deposit_tx),
-  vout      : 0,
-  prevout   : deposit_tx.vout[0],
-  scriptSig : [],
-  sequence  : 0xFFFFFFFD,
-  witness   : []
-}
+const [ b_session, b_secnonce ] = Musig2.ctx.get_shared (
+  group_keys,
+  b_wallet.sec_nonce,
+  a_wallet.pub_nonce,
+  message,
+  options
+)
 
-const deposit_value = deposit_utxo.prevout.value as number
+console.log(a_session.to_hex())
+console.log(b_session.to_hex())
 
-const payout_tx = Tx.create({
-  vin  : [ deposit_utxo ],
-  vout : [{
-    value: deposit_value - fee,
-    scriptPubKey : Address.toScriptPubKey(payout_address)
-  }]
-})
+const group_sigs : Bytes[] = []
 
-const sighash = Signer.taproot.hash(payout_tx, 0, { sigflag : 0x81 })
-const options = { tweaks : [ tweak ] }
+group_sigs.push(
+  Musig2.musign (
+    a_session,
+    a_wallet.sec_key,
+    a_secnonce
+  )
+)
 
-const sig = musig.sign(sighash.hex, options)
+group_sigs.push(
+  Musig2.musign (
+    a_session,
+    b_wallet.sec_key,
+    b_secnonce
+  )
+)
 
-console.log('internal_key:', pubkey)
-console.log('tapkey:', tapkey)
-console.log('group_key:', musig.session.group_pubkey.slice(1).hex)
+// Combine all the partial signatures into our final signature.
+const signature = Musig2.calc.signature(a_session, group_sigs)
 
-payout_tx.vin = [ deposit_utxo ]
-payout_tx.vin[0].witness = [ Buff.join([sig, 0x81]) ]
+// Check if the signature is valid.
+const isValid1 = Musig2.verify.musig (
+  b_session,
+  signature
+)
 
-const refund_tx = Tx.create({
-  vin : [{ ...deposit_utxo, sequence: height }],
-  vout : [{
-    value        : deposit_value - fee,
-    scriptPubKey : Address.toScriptPubKey(sweep_address)
-  }],
-})
+// BONUS: Check if the signature is valid using an independent library.
+const { group_pubkey } = a_session
+const pubkey   = group_pubkey.slice(1)
+const isValid2 = schnorr.verify(signature, message, pubkey)
 
-const refund_sig = Signer.taproot.sign(sec_key, refund_tx, 0, { extension: tapleaf })
-
-refund_tx.vin[0].witness = [ refund_sig, refund_script, cblock ]
-
-console.log('fund address:', Address.p2tr.fromPubKey(pub_key, 'regtest'))
-console.log('deposit tx:', Tx.encode(deposit_tx).hex)
-console.log('payout tx:', Tx.encode(payout_tx).hex)
-console.log('refund tx:', Tx.encode(refund_tx).hex)
-
-console.log(musig.state)
+console.log('isValid1:', isValid1)
+console.log('isValid2:', isValid2)

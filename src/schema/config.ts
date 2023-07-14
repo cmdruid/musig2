@@ -1,4 +1,4 @@
-import { Bytes } from './types.js'
+import { Bytes } from '@cmdcode/buff-utils'
 
 export type MusigConfig = Partial<MusigOptions>
 
@@ -7,13 +7,17 @@ export interface MusigOptions {
   tweaks : Bytes[]
 }
 
-export const DEFAULT_OPTIONS = {
+export const MUSIG_DEFAULTS = {
   seeds  : [],
   tweaks : []
 }
 
-export function apply_defaults (
+export const CONST = {
+  SAFE_MIN_VALUE: 0xFFn ** 16n
+}
+
+export function musig_config (
   config : MusigConfig = {}
 ) : MusigOptions {
-  return { ...DEFAULT_OPTIONS, ...config }
+  return { ...MUSIG_DEFAULTS, ...config }
 }

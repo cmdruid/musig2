@@ -81,6 +81,14 @@ export function point_x (
   return { x, y }
 }
 
+export function is_point (point : any) : point is Point {
+  return (
+    typeof point   === 'object' &&
+    typeof point.x === 'bigint' &&
+    typeof point.y === 'bigint'
+  )
+}
+
 export function get_points (
   ...bytes : Bytes[]
 ) : Point[] {

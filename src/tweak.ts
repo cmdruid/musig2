@@ -1,49 +1,47 @@
-import { modN }  from './math.js'
-import { Bytes } from './schema/index.js'
+import { Bytes }      from '@cmdcode/buff-utils'
+import { PointState } from './schema/index.js'
 
 import {
-  N,
-  G,
-  Point,
-  mod_key,
-  is_even,
-  point_add,
-  point_mul,
-  assert_point
-} from './point.js'
+  assert,
+  PointData,
+  math,
+  point
+} from '@cmdcode/crypto-utils'
 
-export type PointData = [
-  point  : Point,
-  parity : bigint,
-  state  : bigint,
-  tweak  : bigint
-]
+const { CONST } = math
 
 export function apply_tweaks (
-  point  : Point,
+  int_pt : PointData,
   tweaks : Bytes[]
-) : PointData {
+) : PointState {
   // Convert our tweaks to integers.
-  const ints = tweaks.map(e => mod_key(e).big)
+  const ints = tweaks.map(e => math.mod_bytes(e).big)
   const pos  = BigInt(1)
-  const neg  = N - pos
+  const neg  = CONST.N - pos
 
-  let Q      = point,
+  let Q : PointData | null = int_pt,
       parity = pos, // Handles negation for current round.
       state  = pos, // Tracks negation state across rounds.
       tweak  = 0n   // Stores the accumulated (negated) tweak.
 
   for (const t of ints) {
     // If point is odd, g should be negative.
-    parity = (!is_even(Q)) ? neg : pos
+    parity = (!point.is_even(Q)) ? neg : pos
     // Invert Q based on g, then add tweak.
-    Q = point_add(point_mul(Q, parity), point_mul(G, t))
+    Q = point.add(point.mul(Q, parity), point.mul(CONST.G, t))
     // Assert that Q is not null.
-    assert_point(Q)
+    assert.valid_point(Q)
     // Store our progress for the next round.
-    state = modN(parity * state)
-    tweak = modN(t + parity * tweak)
+    state = math.modN(parity * state)
+    tweak = math.modN(t + parity * tweak)
   }
-  parity = (!is_even(Q)) ? neg : pos
-  return [ Q, parity, state, tweak ]
+
+  parity = (!point.is_even(Q)) ? neg : pos
+
+  return {
+    point      : Q,
+    key_parity : parity,
+    key_state  : state,
+    key_tweak  : tweak
+  }
 }

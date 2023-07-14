@@ -34,6 +34,8 @@ rules:
         afterColon  : true
   "@typescript-eslint/indent": off
   "@typescript-eslint/return-await": [ 1, "in-try-catch" ]
+  "@typescript-eslint/strict-boolean-expressions": off
+  "@typescript-eslint/restrict-plus-operands": off
   "@typescript-eslint/no-base-to-string": off
   "@typescript-eslint/naming-convention": off
   "@typescript-eslint/array-type": off

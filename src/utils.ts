@@ -1,20 +1,10 @@
-import { Buff, Bytes }  from '@cmdcode/buff-utils'
+import { Buff, Bytes } from '@cmdcode/buff-utils'
+import * as assert     from './assert.js'
 
-export function buffer (bytes : Bytes) : Buff {
-  return (bytes instanceof Buff) ? bytes : Buff.bytes(bytes)
-}
+export const random = Buff.random
 
 export function hash_str (str : string) : Buff {
   return Buff.str(str).digest
-}
-
-export function assert_size (key : Bytes, size ?: number) : void {
-  if (size !== undefined) {
-    const b = buffer(key)
-    if (size !== b.length) {
-      throw new TypeError(`[${b.hex}] Invalid key size: ${b.length} !== ${size}`)
-    }
-  }
 }
 
 export function sort_keys (keys : Bytes[]) : Buff[] {
@@ -23,16 +13,16 @@ export function sort_keys (keys : Bytes[]) : Buff[] {
   return arr.map(e => Buff.hex(e))
 }
 
-export function parse_key (
-  key   : Bytes,
-  size ?: number
-) : Buff {
-  const bytes = buffer(key)
-  assert_size(bytes, size)
-  return bytes
-}
+// export function parse_key (
+//   key   : Bytes,
+//   size ?: number
+// ) : Buff {
+//   const bytes = Buff.bytes(key)
+//   assert.size(bytes, size)
+//   return bytes
+// }
 
-export function get_keydata (
+export function get_key_data (
   key_data : Bytes
 ) : [ size: number, rounds: number ] {
   const size = Buff.bytes(key_data).length
@@ -51,8 +41,8 @@ export function parse_keys (
   chk_size ?: number
 ) : Buff[] {
   const data = Buff.bytes(key_data)
-  assert_size(data, chk_size)
-  const [ key_size, rounds ] = get_keydata(data)
+  assert.size(data, chk_size)
+  const [ key_size, rounds ] = get_key_data(data)
   const keys   = []
   const stream = data.stream
   for (let i = 0; i < rounds; i++) {
@@ -61,26 +51,14 @@ export function parse_keys (
   return keys
 }
 
-export function hashTag (
-  tag : string,
-  ...data : Bytes[]
-) : Buff {
-  const htag = Buff.str(tag).digest.raw
-  const buff = data.map(e => Buff.normalize(e))
-  return Buff.join([ htag, htag, Buff.join(buff) ]).digest
-}
-
-export function hexify (
-  obj : Record<any, any>
-) : Record<string, string> {
-  const ent : [ string, Bytes ][] = Object.entries(obj)
-  const hex = ent.map(([ key, bytes ]) => {
-    if (bytes instanceof Buff) {
-      bytes = bytes.hex
-    }
-    return [ key, bytes ]
-  })
-  return Object.fromEntries(hex)
+export function hexify (item : any) : Buff | Buff[] | any {
+  if (Array.isArray(item)) {
+    return item.map(e => hexify(e))
+  }
+  if (item instanceof Buff) {
+    return item.hex
+  }
+  return item
 }
 
 export function has_items<T> (arr : Array<T>) : boolean {

@@ -1,81 +1,68 @@
-import { Buff, Bytes } from '@cmdcode/buff-utils'
-import { modN }        from './math.js'
-import { KeyContext }  from './context.js'
-import { KeyOperationError }  from './error.js'
-import { buffer, parse_keys } from './utils.js'
+import { Buff, Bytes }      from '@cmdcode/buff-utils'
+import { ecc, math, point } from '@cmdcode/crypto-utils'
+import { parse_keys }       from './utils.js'
 
-import {
-  G,
-  point_add,
-  point_mul,
-  point_eq,
-  assert_point,
-  point_x,
-  parse_x,
-  N
-} from './point.js'
+import * as assert from './assert.js'
 
-const _0n = BigInt(0)
+import { MusigSession } from './schema/index.js'
 
-export function assert_N (bytes : Bytes) : void {
-  const big = Buff.bytes(bytes).big
-  if (big <= _0n || N <= big) {
-    throw new KeyOperationError({
-      type   : 'assert_N',
-      reason : 'Key out of range.',
-      data   : [ Buff.big(big, 32).hex ]
-    })
-  }
-}
+const { CONST } = math
 
 export function combine_s (
   signatures : Bytes[]
 ) : bigint {
   // Initialize s at zero.
-  let s = _0n
+  let s = CONST._0n
   // Iterate through each sig:
   for (const psig of signatures) {
     // Convert key to bigint.
-    const s_i = buffer(psig).big
+    const s_i = Buff.bytes(psig).big
     // Assert key is within range.
-    assert_N(s_i)
+    assert.in_field(s_i)
     // Add signature value to s.
-    s = modN(s + s_i)
+    s = math.modN(s + s_i)
   }
   return s
 }
 
 export function combine_sigs (
-  context    : KeyContext,
+  context    : MusigSession,
   signatures : Bytes[]
 ) : Buff {
-  const { challenge, key_parity, group_R, key_tweak } = context
+  const { challenge, key_parity, group_rx, key_tweak } = context
 
   const s   = combine_s(signatures)
   const e   = challenge.big
   const a   = e * key_parity * key_tweak
-  const sig = modN(s + a)
+  const sig = math.modN(s + a)
 
   // Return the combined signature.
   return Buff.join([
-    parse_x(group_R),
+    ecc.parse_x(group_rx),
     Buff.big(sig, 32)
   ])
 }
 
+export function verify_psig (
+ psigs : Bytes[]
+) : void {
+  void psigs
+  throw new Error('Not implemented')
+}
+
 export function verify_sig (
-  context   : KeyContext,
+  context   : MusigSession,
   signature : Bytes
 ) : boolean {
   const { challenge, group_pubkey } = context
   const [ rx, s ] = parse_keys(signature, 64)
-  const S  = point_mul(G, s.big)
-  const R  = point_x(rx, true)
-  const P  = point_x(group_pubkey, true)
-  const c  = buffer(challenge).big
-  const SP = point_add(R, point_mul(P, c))
-  assert_point(S)
-  return point_eq(S, SP)
+  const S  = point.mul(CONST.G, s.big)
+  const R  = point.lift_x(rx, true)
+  const P  = point.lift_x(group_pubkey, true)
+  const c  = Buff.bytes(challenge).big
+  const SP = point.add(R, point.mul(P, c))
+  assert.valid_point(S)
+  return point.eq(S, SP)
 }
 
 // export function verify_all (

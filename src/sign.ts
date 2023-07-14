@@ -1,98 +1,31 @@
 import { Buff, Bytes }   from '@cmdcode/buff-utils'
-import { modN, pow }     from './math.js'
+import { math }          from '@cmdcode/crypto-utils'
+import { compute_s }     from './compute.js'
 import { get_vector }    from './pubkey.js'
-import { generate_keys } from './generate.js'
-import { KeyContext }    from './context.js'
-import { buffer, hashTag, parse_keys } from './utils.js'
+import { parse_keys }    from './utils.js'
+import { MusigSession }  from './schema/index.js'
 
-import {
-  N,
-  Point,
-  point_x,
-  point_add,
-  point_mul,
-  assert_point,
-  parse_x
-} from './point.js'
+import * as keys from './keys.js'
 
-export function get_challenge (
-  group_R   : Bytes,
-  group_pub : Bytes,
-  message   : Bytes
-) : Buff {
-  const grx = parse_x(group_R)
-  const gpx = parse_x(group_pub)
-  // Create the challenge pre image.
-  const preimg = Buff.join([ grx, gpx, message ])
-  // Return the challenge hash.
-  return hashTag('BIP0340/challenge', preimg)
-}
+// We will have a separate method for deriving nonces from seeds.
+// We can pre-calc the pub nonces and give them out for the group R calc.
+// We can also pass these seeds into the signer to generate the proper sec nonces.
 
-export function compute_R (
-  group_nonce : Bytes,
-  nonce_coeff : Bytes
-) : Point {
-  // Read our data into buffer.
-  const nonces = parse_keys(group_nonce)
-  const ncoeff = Buff.bytes(nonce_coeff)
-  // Init our R value as null point.
-  let R : Point | null = null
-  // For each round of nonces:
-  for (let j = 0; j < nonces.length; j++) {
-    // Calculate coefficient for round.
-    const c  = modN(ncoeff.big ** BigInt(j))
-    // Convert current nonce into point.
-    const NC = point_x(nonces[j])
-    // Assert n is not null.
-    assert_point(NC)
-    // Apply coefficient to n.
-    const Rj = point_mul(NC, c)
-    // Add tweaked nonce to R.
-    R = point_add(R, Rj)
-  }
-  // Asset R is not null.
-  assert_point(R)
-  // Return x value of R.
-  return R
-}
+const buffer = Buff.bytes
 
-export function compute_s (
-  secret_key : bigint,
-  key_vector : bigint,
-  challenge  : bigint,
-  sec_nonces : bigint[],
-  nonce_vect : bigint
-) : Buff {
-  // Similar to typical schnorr signing,
-  // with an added group coefficient tweak.
-  let s = modN(challenge * key_vector * secret_key)
-
-  for (let j = 0; j < sec_nonces.length; j++) {
-    // Set our nonce value for the round.
-    const r = sec_nonces[j]
-    // Compute our nonce vector.
-    const c = pow(nonce_vect, BigInt(j), N)
-    // Apply the nonce and vector tweak.
-    s += (r * c)
-    // Squash our signature back into the field.
-    s = modN(s)
-  }
-
-  return Buff.big(s, 32)
-}
-
-export function sign (
-  context   : KeyContext,
+export function musign (
+  context   : MusigSession,
   secret    : Bytes,
   sec_nonce : Bytes
 ) : Buff {
   // Unpack the context we will use.
-  const { challenge, nonce_vector, R_state, key_state, key_parity, vectors } = context
+  const { challenge, nonce_vector, R_state }   = context
+  const { key_state, key_parity, key_vectors } = context
   // Load secret key into buffer.
-  const [ sec, pub ] = generate_keys(secret)
+  const [ sec, pub ] = keys.get_keypair(secret, true, true)
   // Get the vector for our pubkey.
-  const p_v = get_vector(vectors, pub).big
-  const sk  = modN(key_parity * key_state * sec.big)
+  const p_v = get_vector(key_vectors, pub).big
+  const sk  = math.modN(key_parity * key_state * sec.big)
   const cha = buffer(challenge).big
   const n_v = buffer(nonce_vector).big
   // Parse nonce values into an array.

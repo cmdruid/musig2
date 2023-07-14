@@ -1,8 +1,8 @@
 import { Buff } from '@cmdcode/buff-utils'
 import { Test } from 'tape'
 
-import { to_bytes }        from '../../src/point.js'
-import { get_key_context } from '../../src/context.js'
+import { to_bytes }    from '../../src/ecc/point.js'
+import { get_context } from '../../src/context.js'
 
 import {
   get_key_vector,
@@ -17,8 +17,7 @@ import {
 import {
   compute_R,
   get_challenge,
-  sign
-} from '../../src/sign.js'
+} from '../../src/compute.js'
 
 import {
   combine_sigs,
@@ -26,6 +25,7 @@ import {
 } from '../../src/verify.js'
 
 import vectors from './vectors.json' assert { type : 'json' }
+import { musign } from '../../src/sign.js'
 
 type Vector = typeof vectors[0]
 
@@ -115,13 +115,13 @@ function sign_test (t : Test, v : Vector) {
   const { pub_keys, pub_nonces, sec_nonces, sec_keys, signatures } = group
   const rounds = group.pub_keys.length
 
-  const session = get_key_context(pub_keys, pub_nonces, chall_mesg, opt)
+  const session = get_context(pub_keys, pub_nonces, chall_mesg, opt)
 
   t.test('sign_test', t => {
     t.plan(rounds)
     for (let i = 0; i < rounds; i++) {
       const target = signatures[i]
-      const sig = sign (
+      const sig = musign (
         session,
         sec_keys[i],
         sec_nonces[i]
@@ -134,7 +134,7 @@ function sign_test (t : Test, v : Vector) {
 function combine_sigs_test (t : Test, v : Vector) {
   const { group, group_sig, group_R, chall_mesg, opt } = v
   const { pub_keys, pub_nonces, sec_nonces, sec_keys, signatures } = group
-  const session = get_key_context(pub_keys, pub_nonces, chall_mesg, opt)
+  const session = get_context(pub_keys, pub_nonces, chall_mesg, opt)
   const ret = combine_sigs(session, group.signatures)
   t.test('combine_s_test', t => {
     t.plan(1)
@@ -145,7 +145,7 @@ function combine_sigs_test (t : Test, v : Vector) {
 function verify_sig_test (t : Test, v : Vector) {
   const { group, group_sig, group_R, chall_mesg, opt } = v
   const { pub_keys, pub_nonces, } = group
-  const session = get_key_context(pub_keys, pub_nonces, chall_mesg, opt)
+  const session = get_context(pub_keys, pub_nonces, chall_mesg, opt)
   const isValid = verify_sig(session, Buff.join([ group_R, group_sig ]))
   t.test('verify_sig_test', t => {
     t.plan(1)

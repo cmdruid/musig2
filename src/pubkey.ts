@@ -1,30 +1,32 @@
-import { Buff, Bytes }  from '@cmdcode/buff-utils'
-import { modN }         from './math.js'
+import { Buff, Bytes }       from '@cmdcode/buff-utils'
+import { sort_keys }         from './utils.js'
 import { KeyOperationError } from './error.js'
-import { buffer, hashTag, sort_keys } from './utils.js'
+
+import * as assert from './assert.js'
 
 import {
-  Point,
-  point_x,
-  point_add,
-  point_mul,
-  assert_point
-} from './point.js'
+  digest,
+  PointData,
+  math,
+  point
+} from '@cmdcode/crypto-utils'
 
-function hash_keys (
+import { KeyVector } from './schema/types.js'
+
+function get_group_hash (
   pubkeys : Bytes[]
 ) : Buff {
   // Sort the set of keys in lexicographical order.
   const group_p = sort_keys(pubkeys)
   // Convert the set of keys into a hash.
-  return hashTag('KeyAgg list', ...group_p)
+  return digest('KeyAgg list', ...group_p)
 }
 
-function hash_key_vector (
+function get_vector_hash (
   group_hash : Bytes,
   coeff_key  : Bytes
 ) : Buff {
-  return hashTag('KeyAgg coefficient', group_hash, coeff_key)
+  return digest('KeyAgg coefficient', group_hash, coeff_key)
 }
 
 export function get_key_vector (
@@ -32,64 +34,67 @@ export function get_key_vector (
   self_key : Bytes
 ) : Buff {
   // Obtain the group key hash.
-  const group_hash = hash_keys(pubkeys)
+  const group_hash  = get_group_hash(pubkeys)
   // Return the coeff_key hash.
-  const vector = hash_key_vector(group_hash, self_key)
+  const vector_hash = get_vector_hash(group_hash, self_key)
   // Return the coefficient mod N.
-  return Buff.big(modN(vector.big), 32)
+  return Buff.big(math.modN(vector_hash.big), 32)
 }
 
 export function combine_pubkeys (
   pubkeys  : Bytes[]
-) : [ int_point : Point, vectors : Map<string, Buff> ] {
+) : [ point : PointData, vectors : KeyVector[] ] {
   // Sort keys lexigraphically.
   const keys = sort_keys(pubkeys)
+  // Get hash commitment of keys.
+  const hash = get_group_hash(keys)
   // We are going to store the key vectors.
-  const vectors = new Map()
+  const vectors : KeyVector[] = []
   // Initialize our group point.
-  let group_P : Point | null = null
+  let group_P : PointData | null = null
   // Iterate through our list of pubkeys.
   for (const key of keys) {
-    // Calculate the coefficient hash.
-    const c = get_key_vector(keys, key)
+    // Calculate the vector hash.
+    const c = get_vector_hash(hash, key)
     // Add the key vector to the map.
-    vectors.set(key.hex, c.hex)
+    vectors.push([ key.hex, c ])
     // NOTE: Current spec forces xonly keys here.
-    const P = point_x(key)
+    const P = point.lift_x(key)
     // Check if point is null.
     if (P === null) {
       // Report key for returning null.
       throw new KeyOperationError({
         pubkey : key.hex,
-        type   : 'point_x',
+        type   : 'lift_x',
         reason : 'Point lifted from key is null!'
       })
     }
     // Multiply pubkey with its coefficient.
-    const mP = point_mul(P, c.big)
+    const mP = point.mul(P, c.big)
     // Add the point to our sum.
-    group_P = point_add(group_P, mP)
+    group_P = point.add(group_P, mP)
     // Check if group point is null.
     if (group_P === null) {
       // Report key for returning null.
       throw new KeyOperationError({
         pubkey : key.hex,
         type   : 'point_add',
-        reason : 'Tweaked point nullifies the group!'
+        reason : 'Point nullifies the group!'
       })
     }
   }
   // Assert that final key is not null.
-  assert_point(group_P)
+  assert.valid_point(group_P)
+  // Return group key and vectors.
   return [ group_P, vectors ]
 }
 
 export function get_vector (
-  vectors : Map<string, Bytes>,
+  vectors : KeyVector[],
   pubkey  : Bytes
 ) : Buff {
-  const key = buffer(pubkey)
-  const pkv = vectors.get(key.hex)
+  const key = Buff.bytes(pubkey)
+  const pkv = vectors.find(e => e[0] === key.hex)
   // If our key vector is not found, throw.
   if (pkv === undefined) {
     throw new KeyOperationError({
@@ -98,5 +103,5 @@ export function get_vector (
       pubkey : key.hex
     })
   }
-  return Buff.bytes(pkv)
+  return pkv[1]
 }
