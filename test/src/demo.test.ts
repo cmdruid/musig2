@@ -37,29 +37,26 @@ export function demo_test (t : Test) {
   const group_nonces = wallets.map(e => e.pub_nonce)
 
   // Combine all your collected keys into a signing session.
-  const session = Musig2.ctx.get_session(group_keys, group_nonces, message, options)
+  const ctx = Musig2.sig.get_ctx(group_keys, group_nonces, message, options)
 
   // Each member creates their own partial signature,
   // using their own computed signing session.
   const group_sigs = wallets.map(wallet => {
-    return Musig2.musign(
-      session,
+    return Musig2.sig.sign (
+      ctx,
       wallet.sec_key,
       wallet.sec_nonce
     )
   })
 
   // Combine all the partial signatures into our final signature.
-  const signature = Musig2.calc.signature(session, group_sigs)
+  const signature = Musig2.sig.combine_sigs(ctx, group_sigs)
 
   // Check if the signature is valid.
-  const isValid1 = Musig2.verify.musig (
-    session,
-    signature
-  )
+  const isValid1 = Musig2.verify.sig(ctx, signature)
 
   // BONUS: Check if the signature is valid using an independent library.
-  const { group_pubkey } = session
+  const { group_pubkey } = ctx
   const pubkey   = group_pubkey.slice(1)
   const isValid2 = schnorr.verify(signature, message, pubkey)
 

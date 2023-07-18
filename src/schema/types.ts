@@ -32,7 +32,7 @@ export interface PointState {
   key_tweak  : bigint
 }
 
-export interface MusigSession {
+export interface MusigContext {
   pub_keys     : Buff[]
   pub_nonces   : Buff[]
   R_state      : bigint
@@ -47,5 +47,5 @@ export interface MusigSession {
   group_rx     : Buff
   challenge    : Buff
   options      : MusigOptions
-  to_hex       : () => MusigSession
+  to_hex       : () => MusigContext
 }

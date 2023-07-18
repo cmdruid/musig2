@@ -38,3 +38,6 @@ dist
 
 #VSCode
 .vscode
+
+.notes.md
+TODO.md

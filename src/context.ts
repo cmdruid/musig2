@@ -1,7 +1,14 @@
 import { Buff, Bytes }     from '@cmdcode/buff-utils'
-import { math, point }     from '@cmdcode/crypto-utils'
 import { combine_pubkeys } from './pubkey.js'
 import { apply_tweaks }    from './tweak.js'
+import { sort_keys }       from './utils.js'
+
+import {
+  digest,
+  ecc,
+  math,
+  point
+} from '@cmdcode/crypto-utils'
 
 import {
   compute_R,
@@ -16,8 +23,8 @@ import {
 
 import {
   musig_config,
-  MusigConfig,
-  MusigSession
+  MusigOptions,
+  MusigContext
 } from './schema/index.js'
 
 const { CONST } = math
@@ -26,8 +33,8 @@ export function get_context (
   pubkeys  : Bytes[],
   nonces   : Bytes[],
   message  : Bytes,
-  options ?: MusigConfig
-) : MusigSession {
+  options ?: MusigOptions
+) : MusigContext {
   const opt = musig_config(options)
   const { tweaks } = opt
   const [ int_pt, key_vectors ]    = combine_pubkeys(pubkeys)
@@ -60,26 +67,30 @@ export function get_context (
   return session
 }
 
-export function get_shared_ctx (
-  pubkeys     : Bytes[],
-  self_seckey : Bytes,
-  peer_pubkey : Bytes,
-  message     : Bytes,
-  options    ?: MusigConfig
-) : [ session : MusigSession, sec_nonce : Buff ] {
-  const nonce_ctx = get_shared_nonces(self_seckey, peer_pubkey, message)
-  const [ sec_nonce, pub_nonce, alt_nonce ] = nonce_ctx
-  const nonces  = [ pub_nonce, alt_nonce ]
-  const session = get_context(pubkeys, nonces, message, options)
-  return [ session, sec_nonce ]
+export function get_shared (
+  pub_keys  : Bytes[],
+  pub_code  : Bytes,
+  sec_code  : Bytes,
+  message   : Bytes,
+  options  ?: MusigOptions
+) : [ MusigContext, Buff ] {
+  const self_code   = ecc.get_pubkey(sec_code, false)
+  const sorted_pubs = sort_keys(pub_keys)
+  const sorted_code = sort_keys([ self_code, pub_code ])
+  const preimg = [ ...sorted_pubs, ...sorted_code, message ]
+  const hash   = digest('musig/shared', ...preimg)
+  const shared = get_shared_nonces(sec_code, pub_code, hash)
+  const [ sec_nonce, ...nonces ] = shared
+  const ctx = get_context(pub_keys, nonces, message, options)
+  return [ ctx, sec_nonce ]
 }
 
 function hexify (
-  session : MusigSession
-) : MusigSession {
+  session : MusigContext
+) : MusigContext {
   const obj : any = {}
   for (const k in session) {
-    const key = k as keyof MusigSession
+    const key = k as keyof MusigContext
     const val = session[key]
     if (Array.isArray(val)) {
       obj[key] = val.map(e => {
@@ -95,5 +106,5 @@ function hexify (
       obj[key] = val.hex
     }
   }
-  return obj as MusigSession
+  return obj as MusigContext
 }

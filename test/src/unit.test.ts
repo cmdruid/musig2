@@ -1,8 +1,11 @@
 import { Buff } from '@cmdcode/buff-utils'
 import { Test } from 'tape'
 
-import { to_bytes }    from '../../src/ecc/point.js'
-import { get_context } from '../../src/context.js'
+import { to_bytes }     from '../../src/ecc/point.js'
+import { get_context }  from '../../src/context.js'
+import { combine_sigs } from '../../src/combine.js'
+
+import { sign } from '../../src/sign.js'
 
 import {
   get_key_vector,
@@ -20,12 +23,10 @@ import {
 } from '../../src/compute.js'
 
 import {
-  combine_sigs,
   verify_sig
 } from '../../src/verify.js'
 
 import vectors from './vectors.json' assert { type : 'json' }
-import { musign } from '../../src/sign.js'
 
 type Vector = typeof vectors[0]
 
@@ -115,17 +116,13 @@ function sign_test (t : Test, v : Vector) {
   const { pub_keys, pub_nonces, sec_nonces, sec_keys, signatures } = group
   const rounds = group.pub_keys.length
 
-  const session = get_context(pub_keys, pub_nonces, chall_mesg, opt)
+  const ctx = get_context(pub_keys, pub_nonces, chall_mesg, opt)
 
   t.test('sign_test', t => {
     t.plan(rounds)
     for (let i = 0; i < rounds; i++) {
       const target = signatures[i]
-      const sig = musign (
-        session,
-        sec_keys[i],
-        sec_nonces[i]
-      )
+      const sig = sign (ctx, sec_keys[i], sec_nonces[i])
       t.equal(sig.hex, target, `Signatures for member ${i+1} should match.`)
     }
   })

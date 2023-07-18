@@ -1,11 +1,12 @@
+import * as Comb  from './combine.js'
 import * as Comp  from './compute.js'
+import * as Ctx   from './context.js'
+import * as keys  from './keys.js'
 import * as Nonce from './nonce.js'
 import * as Pub   from './pubkey.js'
+import * as Sig   from './sign.js'
 import * as Ver   from './verify.js'
-import * as keys  from './keys.js'
-import * as Ctx   from './context.js'
 
-export * from './sign.js'
 export * from './schema/index.js'
 
 export * as assert   from './assert.js'
@@ -19,20 +20,24 @@ const {
 } = keys
 
 export const calc = {
-  group_nonce  : Nonce.combine_nonces,
   group_key    : Pub.combine_pubkeys,
-  nonce_vector : Nonce.get_nonce_coeff,
   key_vector   : Pub.get_key_vector,
-  challenge    : Comp.get_challenge,
-  signature    : Ver.combine_sigs,
+  group_nonce  : Nonce.combine_nonces,
+  nonce_vector : Nonce.get_nonce_coeff,
   shared_nonce : Nonce.get_shared_nonces,
   group_rx     : Comp.compute_R,
-  group_s      : Comp.compute_s
+  group_s      : Comp.compute_s,
+  challenge    : Comp.get_challenge
 }
 
-export const ctx = {
-  get_session : Ctx.get_context,
-  get_shared  : Ctx.get_shared_ctx
+export const sig = {
+  get_ctx      : Ctx.get_context,
+  get_shared   : Ctx.get_shared,
+  combine_sigs : Comb.combine_sigs,
+  get_sig      : Comb.get_signature,
+  cosign       : Sig.cosign,
+  musign       : Sig.musign,
+  sign         : Sig.sign
 }
 
 export const ecc = rest
@@ -44,6 +49,8 @@ export const gen = {
 }
 
 export const verify = {
+  musig : Ver.verify_musig,
+  psigs : Ver.verify_psigs,
   psig  : Ver.verify_psig,
-  musig : Ver.verify_sig
+  sig   : Ver.verify_sig
 }

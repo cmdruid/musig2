@@ -1,57 +1,27 @@
-import { Buff, Bytes }      from '@cmdcode/buff-utils'
-import { ecc, math, point } from '@cmdcode/crypto-utils'
-import { parse_keys }       from './utils.js'
+import { Buff, Bytes }  from '@cmdcode/buff-utils'
+import { math, point }  from '@cmdcode/crypto-utils'
+import { get_context }  from './context.js'
+import { combine_sigs } from './combine.js'
+import { parse_keys }   from './utils.js'
 
 import * as assert from './assert.js'
 
-import { MusigSession } from './schema/index.js'
+import {
+  MusigContext,
+  MusigOptions
+} from './schema/index.js'
 
 const { CONST } = math
 
-export function combine_s (
-  signatures : Bytes[]
-) : bigint {
-  // Initialize s at zero.
-  let s = CONST._0n
-  // Iterate through each sig:
-  for (const psig of signatures) {
-    // Convert key to bigint.
-    const s_i = Buff.bytes(psig).big
-    // Assert key is within range.
-    assert.in_field(s_i)
-    // Add signature value to s.
-    s = math.modN(s + s_i)
-  }
-  return s
-}
-
-export function combine_sigs (
-  context    : MusigSession,
-  signatures : Bytes[]
-) : Buff {
-  const { challenge, key_parity, group_rx, key_tweak } = context
-
-  const s   = combine_s(signatures)
-  const e   = challenge.big
-  const a   = e * key_parity * key_tweak
-  const sig = math.modN(s + a)
-
-  // Return the combined signature.
-  return Buff.join([
-    ecc.parse_x(group_rx),
-    Buff.big(sig, 32)
-  ])
-}
-
 export function verify_psig (
- psigs : Bytes[]
-) : void {
-  void psigs
-  throw new Error('Not implemented')
+ psig : Bytes
+) : boolean {
+  void psig
+  return true
 }
 
 export function verify_sig (
-  context   : MusigSession,
+  context   : MusigContext,
   signature : Bytes
 ) : boolean {
   const { challenge, group_pubkey } = context
@@ -65,18 +35,23 @@ export function verify_sig (
   return point.eq(S, SP)
 }
 
-// export function verify_all (
-//   group_keys   : Bytes[],
-//   group_nonces : Bytes[],
-//   group_sigs   : Bytes[],
-//   message   : Bytes,
-//   options   : Partial<MusigOptions> = {}
-// ) : boolean {
-//   const opt = { ...DEFAULT_OPT, ...options }
-//   const [ gpk ] = combine_pubkeys(group_keys, opt)
-//   const gnk     = combine_nonces(group_nonces, opt)
-//   const n_c     = get_nonce_coeff(gnk, gpk, message)
-//   const grk     = compute_R(gnk, n_c)
-//   const sig     = combine_sigs(group_sigs, grk)
-//   return verify_sig(sig, gpk, message)
-// }
+export function verify_psigs (
+ context : MusigContext,
+ psigs   : Bytes[]
+) : boolean {
+  const res = psigs.filter(e => !verify_psig(e))
+  if (res.length > 0) return false
+  const sig = combine_sigs(context, psigs)
+  return verify_sig(context, sig)
+}
+
+export function verify_musig (
+  message    : Bytes,
+  pub_keys   : Bytes[],
+  pub_nonces : Bytes[],
+  signatures : Bytes[],
+  options   ?: MusigOptions
+) : boolean {
+  const ctx = get_context(pub_keys, pub_nonces, message, options)
+  return verify_psigs(ctx, signatures)
+}

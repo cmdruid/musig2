@@ -1,14 +1,23 @@
 import { Buff, Bytes } from '@cmdcode/buff-utils'
 import * as assert     from './assert.js'
 
+export const buffer = Buff.bytes
 export const random = Buff.random
 
 export function hash_str (str : string) : Buff {
   return Buff.str(str).digest
 }
 
+export function has_key (
+  key  : Bytes,
+  keys : Bytes[]
+) : boolean {
+  const str = keys.map(e => buffer(e).hex)
+  return str.includes(buffer(key).hex)
+}
+
 export function sort_keys (keys : Bytes[]) : Buff[] {
-  const arr = keys.map(e => Buff.bytes(e).hex)
+  const arr = keys.map(e => buffer(e).hex)
   arr.sort()
   return arr.map(e => Buff.hex(e))
 }
