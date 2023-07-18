@@ -35,9 +35,6 @@ export function ecdh_test (t : Test) {
   const a_wallet = wallets.find(e => e.name === 'alice')
   const b_wallet = wallets.find(e => e.name === 'bob')
 
-  // Collect public keys from all signers.
-  const group_keys = wallets.map(e => e.pub_key)
-
   // Alice derives a signature.
   const [ a_sig, ctx ] = Musig2.sig.cosign(
     message,
