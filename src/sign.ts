@@ -50,7 +50,7 @@ export function musign (
   sec_key    : Bytes,
   sec_nonce  : Bytes,
   options   ?: MusigOptions
-) : Buff {
+) : [ sig : Buff, ctx : MusigContext ] {
   const pub_key = keys.get_pubkey(sec_key, true)
   const pub_non = keys.get_pub_nonce(sec_nonce, true)
   if (!util.has_key(pub_key, pub_keys)) {
@@ -65,7 +65,7 @@ export function musign (
     message,
     options
   )
-  return sign(ctx, sec_key, sec_nonce)
+  return [ sign(ctx, sec_key, sec_nonce), ctx ]
 }
 
 export function cosign (
@@ -75,7 +75,7 @@ export function cosign (
   sec_key   : Bytes,
   sec_code  : Bytes,
   options  ?: MusigOptions
-) : Buff {
+) : [ sig : Buff, ctx : MusigContext ] {
   const pub     = keys.get_pubkey(sec_key, true)
   const pubkeys = [ pub, peer_pub ]
   const [ ctx, sec_nonce ] = get_shared(
@@ -85,5 +85,5 @@ export function cosign (
     message,
     options
   )
-  return sign(ctx, sec_key, sec_nonce)
+  return [ sign(ctx, sec_key, sec_nonce), ctx ]
 }

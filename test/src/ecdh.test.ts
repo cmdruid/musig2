@@ -1,5 +1,4 @@
 import { Test }    from 'tape'
-import { Bytes }   from '@cmdcode/buff-utils'
 import { schnorr } from '@noble/curves/secp256k1'
 import * as Musig2 from '../../src/index.js'
 
@@ -39,38 +38,26 @@ export function ecdh_test (t : Test) {
   // Collect public keys from all signers.
   const group_keys = wallets.map(e => e.pub_key)
 
-  const [ ctx ] = Musig2.sig.get_shared(
-    group_keys,
-    b_wallet.pub_nonce,
-    a_wallet.sec_nonce,
+  // Alice derives a signature.
+  const [ a_sig, ctx ] = Musig2.sig.cosign(
     message,
-    options
+    b_wallet.pub_key,
+    b_wallet.pub_nonce,
+    a_wallet.sec_key,
+    a_wallet.sec_nonce
   )
 
-  // Alice derives a signature.
-  const group_sigs = [
-    Musig2.sig.cosign(
-      message,
-      b_wallet.pub_key,
-      b_wallet.pub_nonce,
-      a_wallet.sec_key,
-      a_wallet.sec_nonce,
-      options
-    ),
-
-    // Bob derives a signature.
-    Musig2.sig.cosign(
-      message,
-      a_wallet.pub_key,
-      a_wallet.pub_nonce,
-      b_wallet.sec_key,
-      b_wallet.sec_nonce,
-      options
-    )
-  ]
+  // Bob derives a signature.
+  const [ b_sig ] = Musig2.sig.cosign(
+    message,
+    a_wallet.pub_key,
+    a_wallet.pub_nonce,
+    b_wallet.sec_key,
+    b_wallet.sec_nonce
+  )
 
   // Combine all the partial signatures into our final signature.
-  const signature = Musig2.sig.combine_sigs(ctx, group_sigs)
+  const signature = Musig2.sig.combine_sigs(ctx, [ a_sig, b_sig ])
 
   // Check if the signature is valid.
   const isValid1 = Musig2.verify.sig(ctx, signature)
