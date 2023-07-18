@@ -198,10 +198,10 @@
   resolved "https://registry.yarnpkg.com/@cmdcode/buff-utils/-/buff-utils-1.10.2.tgz#7721f00a97b94131414776ecd3ecd0ae5f8d4864"
   integrity sha512-ouBcWoTcoEZd6tCcAD/yuu/J9qbEypdolEGIbbrijWrDj1fmj2vbuiwrqg03ht9PC6JGoK151Dixt707jgcLlw==
 
-"@cmdcode/crypto-utils@^2.2.6":
-  version "2.2.6"
-  resolved "https://registry.yarnpkg.com/@cmdcode/crypto-utils/-/crypto-utils-2.2.6.tgz#fc27c3003566cff735946dca3dcacdce7812141a"
-  integrity sha512-ZhK59h5AceHlxSwC6JB1xvgMAhiw37wIGe++BCcrw9Rp1G1PeY6oqYWp1lYmLIetmXV+jKtWvMXoVmVT+XnnFg==
+"@cmdcode/crypto-utils@^2.2.7":
+  version "2.2.7"
+  resolved "https://registry.yarnpkg.com/@cmdcode/crypto-utils/-/crypto-utils-2.2.7.tgz#589d5ddd88b11213754e207de379bb53134492f9"
+  integrity sha512-KAy/ACKly459rFit/e83KbciC2WSTkcnQ+J7jZrXxKb2ZNx5ymUYWHUk8XAa4hjaZG36ncyuED2fuyG4wBX94Q==
 
 "@cmdcode/tapscript@^1.3.0":
   version "1.4.0"
