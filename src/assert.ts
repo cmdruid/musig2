@@ -1,9 +1,8 @@
-import { buffer, Bytes }     from '@cmdcode/buff-utils'
-import { KeyOperationError } from './error.js'
+import { buffer, Bytes }       from '@cmdcode/buff-utils'
+import { math, pt, PointData } from '@cmdcode/crypto-utils'
+import { KeyOperationError }   from './error.js'
 
-import { assert, math, PointData } from '@cmdcode/crypto-utils'
-
-export function size (
+export function byte_size (
   input  : Bytes,
   size  ?: number
 ) : boolean {
@@ -62,7 +61,7 @@ export function in_field (bytes : Bytes) : void {
   const big = buffer(bytes).big
   if (!math.in_field(big)) {
     throw new KeyOperationError({
-      type   : 'assert_N',
+      type   : 'assert_in_field',
       reason : 'Key out of range of N.',
       data   : [ buffer(big, 32).hex ]
     })
@@ -72,5 +71,5 @@ export function in_field (bytes : Bytes) : void {
 export function valid_point (
   point : PointData | null
 ) : asserts point is PointData {
-  assert.valid_point(point)
+  pt.assert_valid(point)
 }

@@ -1,6 +1,6 @@
 import { Test }    from 'tape'
 import { schnorr } from '@noble/curves/secp256k1'
-import * as Musig2 from '../../src/index.js'
+import * as musig  from '../../src/index.js'
 
 export function demo_test (t : Test) {
 
@@ -13,19 +13,19 @@ export function demo_test (t : Test) {
   // We'll store each member's wallet in an array.
   const wallets : any[] = []
   // Let's also add some additional key tweaks.
-  const tweak1  = Musig2.gen.seckey()
-  const tweak2  = Musig2.gen.seckey()
+  const tweak1  = musig.util.random(32)
+  const tweak2  = musig.util.random(32)
   const options = { tweaks : [ tweak1, tweak2 ], commit_tweaks: false }
 
   // Setup a dummy wallet for each signer.
   for (const name of signers) {
     // Generate some random secrets using WebCrypto.
-    const secret = Musig2.util.random(32)
-    const nonce  = Musig2.util.random(64)
+    const secret = musig.util.random(32)
+    const nonce  = musig.util.random(64)
     // Create a pair of signing keys.
-    const [ sec_key, pub_key     ] = Musig2.ecc.get_keypair(secret, true)
+    const [ sec_key, pub_key     ] = musig.keys.get_keypair(secret)
     // Create a pair of nonces (numbers only used once).
-    const [ sec_nonce, pub_nonce ] = Musig2.ecc.get_nonce_pair(nonce, true, true)
+    const [ sec_nonce, pub_nonce ] = musig.keys.get_nonce_pair(nonce)
     // Add the member's wallet to the array.
     wallets.push({
       name, sec_key, pub_key, sec_nonce, pub_nonce
@@ -37,12 +37,12 @@ export function demo_test (t : Test) {
   const group_nonces = wallets.map(e => e.pub_nonce)
 
   // Combine all your collected keys into a signing session.
-  const ctx = Musig2.sig.get_ctx(group_keys, group_nonces, message, options)
+  const ctx = musig.get_ctx(group_keys, group_nonces, message, options)
 
   // Each member creates their own partial signature,
   // using their own computed signing session.
   const group_sigs = wallets.map(wallet => {
-    return Musig2.sig.sign (
+    return musig.sign.with_ctx(
       ctx,
       wallet.sec_key,
       wallet.sec_nonce
@@ -50,15 +50,14 @@ export function demo_test (t : Test) {
   })
 
   // Combine all the partial signatures into our final signature.
-  const signature = Musig2.sig.combine_sigs(ctx, group_sigs)
+  const signature = musig.combine.psigs(ctx, group_sigs)
 
   // Check if the signature is valid.
-  const isValid1 = Musig2.verify.sig(ctx, signature)
+  const isValid1 = musig.verify.with_ctx(ctx, signature)
 
   // BONUS: Check if the signature is valid using an independent library.
   const { group_pubkey } = ctx
-  const pubkey   = group_pubkey.slice(1)
-  const isValid2 = schnorr.verify(signature, message, pubkey)
+  const isValid2 = schnorr.verify(signature, message, group_pubkey)
 
   t.test('Testing example demo.', t => {
     t.plan(2)

@@ -40,10 +40,7 @@ export default {
       format: 'iife',
       name: 'musig2',
       plugins: [terser()],
-      sourcemap: true,
-      globals: {
-        crypto  : 'crypto'
-      }
+      sourcemap: true
     }
   ],
   plugins: [ typescript(tsConfig), nodeResolve(), commonjs() ],

@@ -20,32 +20,37 @@ interface Warn<T> extends Return<T> {
 
 export type OpReturn<T = string> = Return<T> | Fail<T> | Warn<T>
 
-export type KeyVector = [
-  key : string,
-  vec : Buff
+export type KeyCoeff = [
+  key   : string,
+  coeff : Buff
 ]
 
 export interface PointState {
-  point      : PointData
-  key_parity : bigint
-  key_state  : bigint
-  key_tweak  : bigint
+  point  : PointData
+  parity : bigint
+  state  : bigint
+  tweak  : bigint
 }
 
 export interface MusigContext {
   pub_keys     : Buff[]
   pub_nonces   : Buff[]
-  R_state      : bigint
-  key_state    : bigint
-  key_parity   : bigint
-  key_tweak    : bigint
   int_pubkey   : Buff
+  int_nonce    : Buff
   group_pubkey : Buff
   group_nonce  : Buff
-  key_vectors  : KeyVector[]
-  nonce_vector : Buff
+  Q            : PointState
+  R            : PointState
+  key_coeffs   : KeyCoeff[]
+  nonce_coeff  : Buff
   group_rx     : Buff
   challenge    : Buff
   options      : MusigOptions
   to_hex       : () => MusigContext
+}
+
+export interface PartialSig {
+  sig    : Buff
+  pubkey : Buff
+  nonces : Buff[]
 }

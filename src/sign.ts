@@ -1,8 +1,8 @@
-import { Buff, Bytes } from '@cmdcode/buff-utils'
-import { math }        from '@cmdcode/crypto-utils'
-import { compute_s }   from './compute.js'
-import { get_vector }  from './pubkey.js'
-import { get_context, get_shared } from './context.js'
+import { Buff, Bytes }   from '@cmdcode/buff-utils'
+import { math }          from '@cmdcode/crypto-utils'
+import { compute_s }     from './compute.js'
+import { get_key_coeff } from './pubkey.js'
+import { get_ctx }       from './context.js'
 
 import {
   MusigOptions,
@@ -12,35 +12,30 @@ import {
 import * as keys from './keys.js'
 import * as util from './utils.js'
 
-// We will have a separate method for deriving nonces from seeds.
-// We can pre-calc the pub nonces and give them out for the group R calc.
-// We can also pass these seeds into the signer to generate the proper sec nonces.
-
-const buffer = Buff.bytes
-
-export function sign (
+export function with_ctx (
   context   : MusigContext,
   secret    : Bytes,
   sec_nonce : Bytes
 ) : Buff {
   // Unpack the context we will use.
-  const { challenge, nonce_vector, R_state }   = context
-  const { key_state, key_parity, key_vectors } = context
+  const { challenge, Q, key_coeffs, R, nonce_coeff } = context
   // Load secret key into buffer.
-  const [ sec, pub ] = keys.get_keypair(secret, true, true)
-  // Get the vector for our pubkey.
-  const p_v = get_vector(key_vectors, pub).big
-  const sk  = math.modN(key_parity * key_state * sec.big)
-  const cha = buffer(challenge).big
-  const n_v = buffer(nonce_vector).big
+  const [ sec, pub ] = keys.get_keypair(secret)
+  // Get the coeff for our pubkey.
+  const p_v = get_key_coeff(pub, key_coeffs).big
+  const sk  = math.modN(Q.parity * Q.state * sec.big)
+  const cha = util.buffer(challenge).big
+  const n_v = util.buffer(nonce_coeff).big
   // Parse nonce values into an array.
-  const sn  = util.parse_keys(sec_nonce).map(e => {
+  const sn  = Buff.parse(sec_nonce, 32, 64).map(e => {
     // Negate our nonce values if needed.
-    return  R_state * e.big
+    return R.parity * e.big
   })
+  const pn  = keys.get_pub_nonce(sec_nonce)
+  // Get partial signature.
+  const psig = compute_s(sk, p_v, cha, sn, n_v)
   // Return partial signature.
-  return compute_s(sk, p_v, cha, sn, n_v)
-  // NOTE: Add a partial sig verfiy check here.
+  return Buff.join([ psig, pub, pn ])
 }
 
 export function musign (
@@ -51,39 +46,19 @@ export function musign (
   sec_nonce  : Bytes,
   options   ?: MusigOptions
 ) : [ sig : Buff, ctx : MusigContext ] {
-  const pub_key = keys.get_pubkey(sec_key, true)
-  const pub_non = keys.get_pub_nonce(sec_nonce, true)
+  const pub_key = keys.get_pubkey(sec_key)
+  const pub_non = keys.get_pub_nonce(sec_nonce)
   if (!util.has_key(pub_key, pub_keys)) {
     pub_keys.push(pub_key)
   }
   if (!util.has_key(pub_non, pub_nonces)) {
     pub_keys.push(pub_non)
   }
-  const ctx = get_context(
+  const ctx = get_ctx(
     pub_keys,
     pub_nonces,
     message,
     options
   )
-  return [ sign(ctx, sec_key, sec_nonce), ctx ]
-}
-
-export function cosign (
-  message   : Bytes,
-  peer_pub  : Bytes,
-  peer_code : Bytes,
-  sec_key   : Bytes,
-  sec_code  : Bytes,
-  options  ?: MusigOptions
-) : [ sig : Buff, ctx : MusigContext ] {
-  const pub     = keys.get_pubkey(sec_key, true)
-  const pubkeys = [ pub, peer_pub ]
-  const [ ctx, sec_nonce ] = get_shared(
-    pubkeys,
-    peer_code,
-    sec_code,
-    message,
-    options
-  )
-  return [ sign(ctx, sec_key, sec_nonce), ctx ]
+  return [ with_ctx(ctx, sec_key, sec_nonce), ctx ]
 }

@@ -1,22 +1,8 @@
 {
-  "ts-node": {
-    "transpileOnly": true,
-    "files": true,
-    "esm": true,
-    "compilerOptions": {
-      "module": "ES2022"
-    },
-    "include": ["test/**/*.test.ts"]
-  },
   "compilerOptions": {
-    /* Visit https://aka.ms/tsconfig to read more about this file */
-    "module": "ES2022",
-    "target": "ES2022",
-    "moduleResolution": "Node",
-    "baseUrl": "src",
-    "paths": {
-      "@/*": ["./*"]
-    },
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Bundler",
     "rootDir": "./src",
     "outDir": "./dist",
     "sourceMap": true,

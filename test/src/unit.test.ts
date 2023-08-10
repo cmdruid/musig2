@@ -1,15 +1,13 @@
-import { Buff } from '@cmdcode/buff-utils'
 import { Test } from 'tape'
+import { Buff } from '@cmdcode/buff-utils'
+import { pt }   from '@cmdcode/crypto-utils'
 
-import { to_bytes }     from '../../src/ecc/point.js'
-import { get_context }  from '../../src/context.js'
+import { get_ctx }      from '../../src/context.js'
 import { combine_sigs } from '../../src/combine.js'
 
-import { sign } from '../../src/sign.js'
-
 import {
-  get_key_vector,
-  combine_pubkeys
+  combine_pubkeys,
+  compute_key_coeff
 } from '../../src/pubkey.js'
 
 import { 
@@ -22,9 +20,8 @@ import {
   get_challenge,
 } from '../../src/compute.js'
 
-import {
-  verify_sig
-} from '../../src/verify.js'
+import * as sign   from '../../src/sign.js'
+import * as verify from '../../src/verify.js'
 
 import vectors from './vectors.json' assert { type : 'json' }
 
@@ -46,6 +43,7 @@ export function unit_tests (t : Test) {
       compute_challenge_test(t, v)
       sign_test(t, v)
       combine_sigs_test(t, v)
+      verify_psig_test(t, v)
       verify_sig_test(t, v)
     })
   }
@@ -57,19 +55,19 @@ function key_coeff_test (t : Test, v : Vector) {
   t.test('key_coeff_test', t => {
     t.plan(count)
     for (let i = 0; i < count; i++) {
-      const ret = get_key_vector(pub_keys, pub_keys[i])
+      const ret = compute_key_coeff(pub_keys, pub_keys[i])
       t.equal(ret.hex, key_coeffs[i], 'Key coefficient hash should match.')
     }
   })
 }
 
 function combine_keys_test (t : Test, v : Vector) {
-  const { group, group_key, opt } = v
+  const { group, group_pubkey } = v
   const [ P ] = combine_pubkeys(group.pub_keys)
-  const ret = to_bytes(P)
+  const ret = pt.to_bytes(P).slice(1)
   t.test('combine_pubkeys_test', t => {
     t.plan(1)
-    t.equal(ret.hex, group_key, 'Group pubkey should equal target.')
+    t.equal(ret.hex, group_pubkey, 'Group pubkey should equal target.')
   })
 }
 
@@ -83,8 +81,8 @@ function combine_nonces_test (t : Test, v : Vector) {
 }
 
 function nonce_coeff_test (t : Test, v : Vector) {
-  const { group_nonce, group_key, chall_mesg, nonce_coeff } = v
-  const ret = get_nonce_coeff(group_nonce, group_key, chall_mesg)
+  const { group_nonce, group_pubkey, chall_mesg, nonce_coeff } = v
+  const ret = get_nonce_coeff(group_nonce, group_pubkey, chall_mesg)
   t.test('nonce_coeff_test', t => {
     t.plan(1)
     t.equal(ret.hex, nonce_coeff, 'Nonce coefficient hash should match.')
@@ -92,18 +90,18 @@ function nonce_coeff_test (t : Test, v : Vector) {
 }
 
 function compute_R_test (t : Test, v : Vector) {
-  const { group_nonce, nonce_coeff, group_R } = v
+  const { group_nonce, nonce_coeff, group_rx } = v
   const R = compute_R(group_nonce, nonce_coeff)
-  const ret = to_bytes(R)
+  const ret = pt.to_bytes(R)
   t.test('compute_R_test', t => {
     t.plan(1)
-    t.equal(ret.slice(1).hex, group_R, 'R.x value hex should match.')
+    t.equal(ret.slice(1).hex, group_rx, 'R.x value hex should match.')
   })
 }
 
 function compute_challenge_test (t : Test, v : Vector) {
-  const { group_R, group_key, chall_mesg, chall_hash } = v
-  const ret = get_challenge(group_R, group_key, chall_mesg)
+  const { group_rx, group_pubkey, chall_mesg, chall_hash } = v
+  const ret = get_challenge(group_rx, group_pubkey, chall_mesg)
 
   t.test('compute_challenge_test', t => {
     t.plan(1)
@@ -116,22 +114,22 @@ function sign_test (t : Test, v : Vector) {
   const { pub_keys, pub_nonces, sec_nonces, sec_keys, signatures } = group
   const rounds = group.pub_keys.length
 
-  const ctx = get_context(pub_keys, pub_nonces, chall_mesg, opt)
+  const ctx = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
 
   t.test('sign_test', t => {
     t.plan(rounds)
     for (let i = 0; i < rounds; i++) {
       const target = signatures[i]
-      const sig = sign (ctx, sec_keys[i], sec_nonces[i])
+      const sig = sign.with_ctx(ctx, sec_keys[i], sec_nonces[i])
       t.equal(sig.hex, target, `Signatures for member ${i+1} should match.`)
     }
   })
 }
 
 function combine_sigs_test (t : Test, v : Vector) {
-  const { group, group_sig, group_R, chall_mesg, opt } = v
-  const { pub_keys, pub_nonces, sec_nonces, sec_keys, signatures } = group
-  const session = get_context(pub_keys, pub_nonces, chall_mesg, opt)
+  const { group, group_sig, chall_mesg, opt } = v
+  const { pub_keys, pub_nonces } = group
+  const session = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
   const ret = combine_sigs(session, group.signatures)
   t.test('combine_s_test', t => {
     t.plan(1)
@@ -139,11 +137,23 @@ function combine_sigs_test (t : Test, v : Vector) {
   })
 }
 
+function verify_psig_test (t : Test, v : Vector) {
+  const { group, chall_mesg, opt } = v
+  const { pub_keys, pub_nonces, }  = group
+  const ctx = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
+  const res = group.signatures.filter(e => !verify.psig(ctx, e))
+  const isValid = res.length === 0
+  t.test('verify_psig_test', t => {
+    t.plan(1)
+    t.equal(isValid, true, 'Partial signature values should be valid.')
+  })
+}
+
 function verify_sig_test (t : Test, v : Vector) {
-  const { group, group_sig, group_R, chall_mesg, opt } = v
+  const { group, group_sig, group_rx, chall_mesg, opt } = v
   const { pub_keys, pub_nonces, } = group
-  const session = get_context(pub_keys, pub_nonces, chall_mesg, opt)
-  const isValid = verify_sig(session, Buff.join([ group_R, group_sig ]))
+  const session = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
+  const isValid = verify.with_ctx(session, Buff.join([ group_rx, group_sig ]))
   t.test('verify_sig_test', t => {
     t.plan(1)
     t.equal(isValid, true, 'Combined signature values should be valid.')

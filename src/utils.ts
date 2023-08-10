@@ -1,5 +1,9 @@
 import { Buff, Bytes } from '@cmdcode/buff-utils'
-import * as assert     from './assert.js'
+import { PartialSig }  from './schema/types.js'
+
+import * as ecc from '@cmdcode/crypto-utils'
+
+type PointData = ecc.PointData
 
 export const buffer = Buff.bytes
 export const random = Buff.random
@@ -22,42 +26,23 @@ export function sort_keys (keys : Bytes[]) : Buff[] {
   return arr.map(e => Buff.hex(e))
 }
 
-// export function parse_key (
-//   key   : Bytes,
-//   size ?: number
-// ) : Buff {
-//   const bytes = Buff.bytes(key)
-//   assert.size(bytes, size)
-//   return bytes
-// }
-
-export function get_key_data (
-  key_data : Bytes
-) : [ size: number, rounds: number ] {
-  const size = Buff.bytes(key_data).length
-  switch (true) {
-    case (size % 32 === 0):
-      return [ 32, size / 32 ]
-    case (size % 33 === 0):
-      return [ 33, size / 33 ]
-    default:
-      throw new TypeError(`Invalid key size: ${size}`)
-  }
+export function parse_points (
+  points : PointData[],
+  xonly ?: boolean
+) : Buff {
+  let keys = points.map(P => ecc.pt.to_bytes(P))
+  if (xonly) keys = keys.map(e => ecc.keys.parse_x(e))
+  // Return the combined points buffer.
+  return Buff.join(keys)
 }
 
-export function parse_keys (
-  key_data  : Bytes,
-  chk_size ?: number
-) : Buff[] {
-  const data = Buff.bytes(key_data)
-  assert.size(data, chk_size)
-  const [ key_size, rounds ] = get_key_data(data)
-  const keys   = []
-  const stream = data.stream
-  for (let i = 0; i < rounds; i++) {
-    keys.push(stream.read(key_size))
+export function parse_psig (psig : Bytes) : PartialSig {
+  const keys = Buff.parse(psig, 32, 128)
+  return {
+    sig    : keys[0],
+    pubkey : keys[1],
+    nonces : keys.slice(2)
   }
-  return keys
 }
 
 export function hexify (item : any) : Buff | Buff[] | any {

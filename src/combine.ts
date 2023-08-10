@@ -1,15 +1,9 @@
-import { Buff, Bytes } from '@cmdcode/buff-utils'
-import { ecc, math }   from '@cmdcode/crypto-utils'
-import { get_context } from './context.js'
+import { Buff, Bytes }       from '@cmdcode/buff-utils'
+import { CONST, keys, math } from '@cmdcode/crypto-utils'
+import { parse_psig }        from './utils.js'
+import { MusigContext }      from './schema/index.js'
 
 import * as assert from './assert.js'
-
-import {
-  MusigContext,
-  MusigOptions
-} from './schema/index.js'
-
-const { CONST } = math
 
 export function combine_s (
   signatures : Bytes[]
@@ -32,27 +26,19 @@ export function combine_sigs (
   context    : MusigContext,
   signatures : Bytes[]
 ) : Buff {
-  const { challenge, key_parity, group_rx, key_tweak } = context
-
-  const s   = combine_s(signatures)
+  const { challenge, Q, group_rx } = context
+  const { parity, tweak } = Q
+  const sigs = signatures
+    .map(e => parse_psig(e))
+    .map(e => e.sig)
+  const s   = combine_s(sigs)
   const e   = challenge.big
-  const a   = e * key_parity * key_tweak
+  const a   = e * parity * tweak
   const sig = math.modN(s + a)
 
   // Return the combined signature.
   return Buff.join([
-    ecc.parse_x(group_rx),
+    keys.parse_x(group_rx),
     Buff.big(sig, 32)
   ])
-}
-
-export function get_signature (
-  message    : Bytes,
-  pub_keys   : Bytes[],
-  pub_nonces : Bytes[],
-  signatures : Bytes[],
-  options   ?: MusigOptions
-) : Bytes {
-  const ctx = get_context(pub_keys, pub_nonces, message, options)
-  return combine_sigs(ctx, signatures)
 }

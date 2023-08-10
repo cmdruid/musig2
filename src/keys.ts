@@ -1,67 +1,63 @@
 import { Buff, Bytes } from '@cmdcode/buff-utils'
-import { ecc, sha512 } from '@cmdcode/crypto-utils'
 
-import * as assert from './assert.js'
+import * as ecc    from '@cmdcode/crypto-utils'
 import * as util   from './utils.js'
 
-export const parse_x     = ecc.parse_x
-export const gen_seckey  = ecc.gen_seckey
-export const get_seckey  = ecc.get_seckey
-export const gen_keypair = ecc.gen_keypair
+export const parse_x = ecc.keys.parse_x
+
+export const get_seckey  = (
+  seckey  : Bytes
+) : Buff => {
+  return ecc.keys.get_seckey(seckey, true)
+}
 
 export const get_pubkey  = (
-  seckey  : Bytes,
-  xonly  ?: boolean
+  seckey  : Bytes
 ) : Buff => {
-  return ecc.get_pubkey(seckey, xonly)
+  return ecc.keys.get_pubkey(seckey, true)
 }
 
 export const get_keypair = (
-  secret  : Bytes,
-  xonly  ?: boolean,
-  even_y ?: boolean
+  secret  : Bytes
 ) : Buff[] => {
-  return ecc.get_keypair(secret, xonly, even_y)
+  return ecc.keys.get_keypair(secret, true, true)
+}
+
+export const gen_seckey = () : Buff => {
+  return ecc.keys.gen_seckey(true)
+}
+
+export const gen_keypair = () : Buff[] => {
+  return ecc.keys.gen_keypair(true, true)
 }
 
 export function get_sec_nonce (
-  secret  : Bytes,
-  even_y ?: boolean
+  secret : Bytes
 ) : Buff {
-  const seed = (secret !== undefined)
-    ? sha512(secret)
-    : Buff.random(64)
-  assert.size(seed, 64)
-  const nonces = util
-    .parse_keys(seed)
-    .map(e => get_seckey(e, even_y))
+  const nonces = Buff
+    .parse(secret, 32, 64)
+    .map(e => get_seckey(e))
   return Buff.join(nonces)
 }
 
 export function get_pub_nonce (
-  sec_nonce : Bytes,
-  xonly    ?: boolean
+  sec_nonce : Bytes
 ) : Buff {
-  const nonces = util
-    .parse_keys(sec_nonce)
-    .map(e => get_pubkey(e, xonly))
+  const nonces = Buff
+    .parse(sec_nonce, 32, 64)
+    .map(e => get_pubkey(e))
   return Buff.join(nonces)
 }
 
 export function get_nonce_pair (
-  secret  : Bytes,
-  xonly  ?: boolean,
-  even_y ?: boolean
+  secret : Bytes
 ) : Buff[]  {
-  const sec_nonce = get_sec_nonce(secret, even_y)
-  const pub_nonce = get_pub_nonce(sec_nonce, xonly)
+  const sec_nonce = get_sec_nonce(secret)
+  const pub_nonce = get_pub_nonce(sec_nonce)
   return [ sec_nonce, pub_nonce ]
 }
 
-export function gen_nonce_pair (
-  xonly  ?: boolean,
-  even_y ?: boolean
-) : Buff[] {
+export function gen_nonce_pair () : Buff[] {
   const seed = util.random(64)
-  return get_nonce_pair(seed, xonly, even_y)
+  return get_nonce_pair(seed)
 }
