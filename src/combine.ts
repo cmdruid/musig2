@@ -35,10 +35,9 @@ export function combine_sigs (
   const e   = challenge.big
   const a   = e * parity * tweak
   const sig = math.modN(s + a)
-
   // Return the combined signature.
   return Buff.join([
-    keys.parse_x(group_rx),
+    keys.normalize_32(group_rx),
     Buff.big(sig, 32)
   ])
 }

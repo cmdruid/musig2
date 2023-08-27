@@ -31,7 +31,7 @@ export function parse_points (
   xonly ?: boolean
 ) : Buff {
   let keys = points.map(P => ecc.pt.to_bytes(P))
-  if (xonly) keys = keys.map(e => ecc.keys.parse_x(e))
+  if (xonly) keys = keys.map(e => ecc.keys.normalize_32(e))
   // Return the combined points buffer.
   return Buff.join(keys)
 }

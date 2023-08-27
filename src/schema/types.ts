@@ -32,22 +32,27 @@ export interface PointState {
   tweak  : bigint
 }
 
-export interface MusigContext {
+export interface KeyContext {
   pub_keys     : Buff[]
-  pub_nonces   : Buff[]
   int_pubkey   : Buff
-  int_nonce    : Buff
   group_pubkey : Buff
-  group_nonce  : Buff
-  Q            : PointState
-  R            : PointState
   key_coeffs   : KeyCoeff[]
+  Q            : PointState
+}
+
+export interface NonceContext {
+  pub_nonces   : Buff[]
+  int_nonce    : Buff
+  group_nonce  : Buff
+  R            : PointState
   nonce_coeff  : Buff
   group_rx     : Buff
   challenge    : Buff
-  options      : MusigOptions
-  to_hex       : () => MusigContext
 }
+
+export type MusigContext = KeyContext   &
+                           NonceContext &
+                           { options : MusigOptions }
 
 export interface PartialSig {
   sig    : Buff

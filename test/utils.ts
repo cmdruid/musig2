@@ -56,7 +56,7 @@ export class MusigTest {
   }
 
   get_context (message : string) : MusigContext {
-    return Musig2.get_ctx(
+    return Musig2.ctx.get_ctx(
       this.pubkeys,
       this.nonces,
       message,

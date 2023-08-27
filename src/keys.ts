@@ -1,12 +1,10 @@
 import { Buff, Bytes } from '@cmdcode/buff-utils'
 
-import * as ecc    from '@cmdcode/crypto-utils'
-import * as util   from './utils.js'
-
-export const parse_x = ecc.keys.parse_x
+import * as ecc  from '@cmdcode/crypto-utils'
+import * as util from './utils.js'
 
 export const get_seckey  = (
-  seckey  : Bytes
+  seckey : Bytes
 ) : Buff => {
   return ecc.keys.get_seckey(seckey, true)
 }
@@ -46,6 +44,26 @@ export function get_pub_nonce (
   const nonces = Buff
     .parse(sec_nonce, 32, 64)
     .map(e => get_pubkey(e))
+  return Buff.join(nonces)
+}
+
+export function tweak_sec_nonce (
+  sec_nonce : Bytes,
+  tweaks    : Bytes[] = []
+) : Buff {
+  const nonces = Buff
+    .parse(sec_nonce, 32, 64)
+    .map(e => ecc.keys.tweak_seckey(e, tweaks, true))
+  return Buff.join(nonces)
+}
+
+export function tweak_pub_nonce (
+  pub_nonce : Bytes,
+  tweaks    : Bytes[] = []
+) : Buff {
+  const nonces = Buff
+    .parse(pub_nonce, 32, 64)
+    .map(e => ecc.keys.tweak_pubkey(e, tweaks, true))
   return Buff.join(nonces)
 }
 

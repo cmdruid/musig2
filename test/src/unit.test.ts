@@ -27,7 +27,7 @@ import vectors from './vectors.json' assert { type : 'json' }
 
 type Vector = typeof vectors[0]
 
-export function unit_tests (t : Test) {
+export default function (t : Test) {
   t.comment('Performing unit tests.')
 
   const count = vectors.length

@@ -52,7 +52,7 @@ export function with_ctx (
   return ecc.pt.eq(S, SP)
 }
 
-export function musig (
+export function musign (
   message    : Bytes,
   pub_keys   : Bytes[],
   pub_nonces : Bytes[],

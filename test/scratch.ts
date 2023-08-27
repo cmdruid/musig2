@@ -1,4 +1,4 @@
-import { combine, sign, verify } from '../src/index.js'
+import { combine, ctx, verify } from '../src/index.js'
 import { MusigTest }   from './utils.js'
 
 import { noble } from '@cmdcode/crypto-utils'
@@ -20,21 +20,21 @@ const session = new MusigTest([
   ]
 ])
 
-const [ psigs, ctx ] = session.sign(message)
+const [ psigs, context ] = session.sign(message)
 
 for (const psig of psigs) {
-  const isValid = verify.psig(ctx, psig)
+  const isValid = verify.psig(context, psig)
   console.log('psig:', psig)
   console.log('psig valid:', isValid)
 }
 
-const signature = combine.psigs(ctx, psigs)
+const signature = combine.psigs(context, psigs)
 
 console.log('signature:', signature.hex)
 
-const isValid1 = verify.with_ctx(ctx, signature)
-const isValid2 = noble.schnorr.verify(signature, message, ctx.group_pubkey)
+const isValid1 = verify.with_ctx(context, signature)
+const isValid2 = noble.schnorr.verify(signature, message, context.group_pubkey)
 
-console.log(ctx.to_hex())
+console.log(ctx.hexify(context))
 
 console.log('isValid:', isValid1, isValid2)

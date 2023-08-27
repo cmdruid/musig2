@@ -3,11 +3,10 @@ import * as Comp  from './compute.js'
 import * as Nonce from './nonce.js'
 import * as Pub   from './pubkey.js'
 
-export { get_ctx } from './context.js'
-
 export * from './schema/index.js'
 
 export * as assert from './assert.js'
+export * as ctx    from './context.js'
 export * as keys   from './keys.js'
 export * as sign   from './sign.js'
 export * as util   from './utils.js'

@@ -2,7 +2,7 @@ import { Test }    from 'tape'
 import { schnorr } from '@noble/curves/secp256k1'
 import * as musig  from '../../src/index.js'
 
-export function demo_test (t : Test) {
+export default function (t : Test) {
 
   // Encode an example string as bytes.
   const encoder = new TextEncoder()
@@ -13,9 +13,11 @@ export function demo_test (t : Test) {
   // We'll store each member's wallet in an array.
   const wallets : any[] = []
   // Let's also add some additional key tweaks.
-  const tweak1  = musig.util.random(32)
-  const tweak2  = musig.util.random(32)
-  const options = { tweaks : [ tweak1, tweak2 ], commit_tweaks: false }
+  const tweak1   = musig.util.random(32)
+  const tweak2   = musig.util.random(32)
+  const options  = {
+    key_tweaks : [ tweak1, tweak2 ]
+  }
 
   // Setup a dummy wallet for each signer.
   for (const name of signers) {
@@ -37,7 +39,7 @@ export function demo_test (t : Test) {
   const group_nonces = wallets.map(e => e.pub_nonce)
 
   // Combine all your collected keys into a signing session.
-  const ctx = musig.get_ctx(group_keys, group_nonces, message, options)
+  const ctx = musig.ctx.get_ctx(group_keys, group_nonces, message, options)
 
   // Each member creates their own partial signature,
   // using their own computed signing session.

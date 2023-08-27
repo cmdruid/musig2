@@ -12,8 +12,8 @@ export function get_challenge (
   group_pub : Bytes,
   message   : Bytes
 ) : Buff {
-  const grx = ecc.keys.parse_x(group_rx)
-  const gpx = ecc.keys.parse_x(group_pub)
+  const grx = ecc.keys.normalize_32(group_rx)
+  const gpx = ecc.keys.normalize_32(group_pub)
   // Create the challenge pre image.
   const preimg = Buff.join([ grx, gpx, message ])
   // Return the challenge hash.
@@ -85,11 +85,11 @@ export function compute_R (
 }
 
 export function compute_s (
-  secret_key : bigint,
-  key_coeff : bigint,
-  challenge  : bigint,
-  sec_nonces : bigint[],
-  nonce_vect : bigint
+  secret_key  : bigint,
+  key_coeff   : bigint,
+  challenge   : bigint,
+  sec_nonces  : bigint[],
+  nonce_coeff : bigint
 ) : Buff {
   // Similar to typical schnorr signing,
   // with an added group coefficient tweak.
@@ -99,7 +99,7 @@ export function compute_s (
     // Set our nonce value for the round.
     const r = sec_nonces[j]
     // Compute our nonce coeff.
-    const c = ecc.math.powN(nonce_vect, BigInt(j))
+    const c = ecc.math.powN(nonce_coeff, BigInt(j))
     // Apply the nonce and coeff tweak.
     s += (r * c)
     // Squash our signature back into the field.

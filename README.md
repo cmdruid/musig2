@@ -78,7 +78,7 @@ import * as musig from '@cmdcode/musig2'
   const group_nonces = wallets.map(e => e.pub_nonce)
 
   // Combine all your collected keys into a signing session.
-  const ctx = musig.get_ctx(group_keys, group_nonces, message, options)
+  const ctx = musig.ctx.get_ctx(group_keys, group_nonces, message, options)
 
   // Each member creates their own partial signature,
   // using their own computed signing session.

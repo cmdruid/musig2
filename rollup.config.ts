@@ -38,7 +38,7 @@ export default {
     {
       file: 'dist/browser.js',
       format: 'iife',
-      name: 'musig2',
+      name: 'musig',
       plugins: [terser()],
       sourcemap: true
     }
