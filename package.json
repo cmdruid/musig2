@@ -10,7 +10,7 @@
     "utils",
     "library"
   ],
-  "version": "2.1.5",
+  "version": "2.2.0",
   "type": "module",
   "main": "./dist/main.cjs",
   "unpkg": "./dist/browser.js",
@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@cmdcode/buff-utils": "^1.12.5",
-    "@cmdcode/crypto-utils": "^2.3.28",
+    "@cmdcode/crypto-utils": "^2.4.0",
     "@noble/curves": "^1.1.0",
     "@rollup/plugin-commonjs": "^23.0.2",
     "@rollup/plugin-node-resolve": "^15.0.1",
