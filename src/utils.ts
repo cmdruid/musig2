@@ -1,5 +1,5 @@
 import { Buff, Bytes } from '@cmdcode/buff-utils'
-import { PartialSig }  from './schema/types.js'
+import { PartialSig }  from './types.js'
 
 import * as ecc from '@cmdcode/crypto-utils'
 
@@ -31,7 +31,7 @@ export function parse_points (
   xonly ?: boolean
 ) : Buff {
   let keys = points.map(P => ecc.pt.to_bytes(P))
-  if (xonly) keys = keys.map(e => ecc.keys.normalize_32(e))
+  if (xonly) keys = keys.map(e => ecc.keys.convert_32(e))
   // Return the combined points buffer.
   return Buff.join(keys)
 }

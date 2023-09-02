@@ -1,7 +1,7 @@
 import { Test }    from 'tape'
+import { Buff }    from '@cmdcode/buff-utils'
 import { schnorr } from '@noble/curves/secp256k1'
 import * as musig  from '../../src/index.js'
-import { Buff } from '@cmdcode/buff-utils'
 
 type MusigOptions = musig.MusigOptions
 
@@ -59,8 +59,7 @@ export default function (t : Test) {
     const nonce_ctx = musig.ctx.from_nonces (
       group_nonces,
       key_ctx.group_pubkey,
-      msg,
-      options
+      msg
     )
     // Combine our key and nonce contexts into a full context object.
     const ctx = musig.ctx.create_ctx(key_ctx, nonce_ctx, options)

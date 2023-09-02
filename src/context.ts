@@ -10,18 +10,20 @@ import {
 } from './compute.js'
 
 import {
-  tweak_nonces,
   combine_nonces,
   get_nonce_coeff
 } from './nonce.js'
 
 import {
   musig_config,
-  MusigOptions,
+  MusigOptions
+} from './config.js'
+
+import {
   KeyContext,
   NonceContext,
   MusigContext
-} from './schema/index.js'
+} from './types.js'
 
 export function from_pubkeys (
   pubkeys  : Bytes[],
@@ -43,29 +45,27 @@ export function from_pubkeys (
 }
 
 export function from_nonces (
-  nonces   : Bytes[],
-  grp_pub  : Bytes,
-  message  : Bytes,
-  options ?: MusigOptions
+  pub_nonces : Bytes[],
+  grp_pubkey : Bytes,
+  message    : Bytes
 ) : NonceContext {
-  const opt          = musig_config(options)
-  const pub_nonces   = tweak_nonces(nonces, opt.nonce_tweaks)
-  const group_nonce  = combine_nonces(pub_nonces)
-  const nonce_coeff  = get_nonce_coeff(group_nonce, grp_pub, message)
-  const R_point      = compute_R(group_nonce, nonce_coeff)
-  const int_nonce    = ecc.pt.to_bytes(R_point)
-  const R            = compute_point_state(R_point)
-  const group_rx     = ecc.pt.to_bytes(R.point).slice(1)
-  const challenge    = get_challenge(group_rx, grp_pub, message)
+  const group_nonce = combine_nonces(pub_nonces)
+  const nonce_coeff = get_nonce_coeff(group_nonce, grp_pubkey, message)
+  const R_point     = compute_R(group_nonce, nonce_coeff)
+  const int_nonce   = ecc.pt.to_bytes(R_point)
+  const R           = compute_point_state(R_point)
+  const group_rx    = ecc.pt.to_bytes(R.point).slice(1)
+  const challenge   = get_challenge(group_rx, grp_pubkey, message)
 
   return {
-    pub_nonces,
     group_nonce,
     nonce_coeff,
     int_nonce,
     R,
     group_rx,
-    challenge
+    challenge,
+    message    : Buff.bytes(message),
+    pub_nonces : pub_nonces.map(e => Buff.bytes(e))
   }
 }
 
@@ -76,7 +76,7 @@ export function get_ctx (
   options ?: MusigOptions
 ) : MusigContext {
   const key_ctx   = from_pubkeys(pubkeys, options)
-  const nonce_ctx = from_nonces(nonces, key_ctx.group_pubkey, message, options)
+  const nonce_ctx = from_nonces(nonces, key_ctx.group_pubkey, message)
   return create_ctx(key_ctx, nonce_ctx, options)
 }
 

@@ -1,7 +1,7 @@
 import { Buff, Bytes }       from '@cmdcode/buff-utils'
 import { sort_keys }         from './utils.js'
 import { KeyOperationError } from './error.js'
-import { KeyCoeff }          from './schema/types.js'
+import { KeyCoeff }          from './types.js'
 
 import * as ecc    from '@cmdcode/crypto-utils'
 import * as assert from './assert.js'

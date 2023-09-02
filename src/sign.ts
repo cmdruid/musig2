@@ -1,15 +1,17 @@
 import { Buff, Bytes }   from '@cmdcode/buff-utils'
+import { math }          from '@cmdcode/crypto-utils'
 import { compute_s }     from './compute.js'
 import { get_key_coeff } from './pubkey.js'
 import { get_ctx }       from './context.js'
+import { MusigOptions }  from './config.js'
+import { MusigContext }  from './types.js'
 
 import {
-  MusigOptions,
-  MusigContext
-} from './schema/index.js'
+  get_keypair,
+  get_pub_nonce,
+  get_pubkey
+} from './keys.js'
 
-import * as ecc  from '@cmdcode/crypto-utils'
-import * as keys from './keys.js'
 import * as util from './utils.js'
 
 export function with_ctx (
@@ -18,20 +20,18 @@ export function with_ctx (
   sec_nonce : Bytes
 ) : Buff {
   // Unpack the context we will use.
-  const { challenge, Q, key_coeffs, R, nonce_coeff, options } = context
+  const { challenge, Q, key_coeffs, R, nonce_coeff } = context
   // Load secret key into buffer.
-  const [ sec, pub ] = keys.get_keypair(secret)
+  const [ sec, pub ] = get_keypair(secret)
   // Get the coeff for our pubkey.
   const p_v = get_key_coeff(pub, key_coeffs).big
-  const sk  = ecc.math.modN(Q.parity * Q.state * sec.big)
+  const sk  = math.modN(Q.parity * Q.state * sec.big)
   const cha = util.buffer(challenge).big
   const n_v = util.buffer(nonce_coeff).big
-  // Calculate our sec nonce.
-  const snp = keys.tweak_sec_nonce(sec_nonce, options.nonce_tweaks)
   // Calculate our pub nonce.
-  const pn  = keys.get_pub_nonce(snp)
+  const pn  = get_pub_nonce(sec_nonce)
   // Negate our sec nonce if needed.
-  const sn  = Buff.parse(snp, 32, 64).map(e => {
+  const sn  = Buff.parse(sec_nonce, 32, 64).map(e => {
     // Negate our nonce values if needed.
     return R.parity * e.big
   })
@@ -49,8 +49,8 @@ export function musign (
   sec_nonce  : Bytes,
   options   ?: MusigOptions
 ) : [ sig : Buff, ctx : MusigContext ] {
-  const pub_key = keys.get_pubkey(sec_key)
-  const pub_non = keys.get_pub_nonce(sec_nonce)
+  const pub_key = get_pubkey(sec_key)
+  const pub_non = get_pub_nonce(sec_nonce)
   if (!util.has_key(pub_key, pub_keys)) {
     pub_keys.push(pub_key)
   }

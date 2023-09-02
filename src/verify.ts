@@ -3,11 +3,8 @@ import { combine_sigs }  from './combine.js'
 import { get_ctx }       from './context.js'
 import { get_key_coeff } from './pubkey.js'
 import { parse_psig }    from './utils.js'
-
-import {
-  MusigContext,
-  MusigOptions
-} from './schema/index.js'
+import { MusigOptions }  from './config.js'
+import { MusigContext }  from './types.js'
 
 import * as ecc    from '@cmdcode/crypto-utils'
 import * as assert from './assert.js'

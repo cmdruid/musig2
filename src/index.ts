@@ -3,7 +3,8 @@ import * as Comp  from './compute.js'
 import * as Nonce from './nonce.js'
 import * as Pub   from './pubkey.js'
 
-export * from './schema/index.js'
+export * from './config.js'
+export * from './types.js'
 
 export * as assert from './assert.js'
 export * as ctx    from './context.js'

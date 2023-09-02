@@ -10,27 +10,27 @@ const buffer = Buff.bytes
 
 const { _G } = ecc.CONST
 
-export function tweak_nonces (
-  pub_nonces : Bytes[],
-  tweaks     : Bytes[]
-) : Buff[] {
-  if (tweaks.length === 0) {
-    return pub_nonces.map(e => Buff.bytes(e))
-  }
-  return pub_nonces.map(e => {
-    const nonces = Buff.parse(e, 32, 64).map(e =>
-      ecc.keys.tweak_pubkey(e, tweaks, true)
-    )
-    return Buff.join(nonces)
-  })
-}
+// export function tweak_nonces (
+//   pub_nonces : Bytes[],
+//   tweaks     : Bytes[]
+// ) : Buff[] {
+//   if (tweaks.length === 0) {
+//     return pub_nonces.map(e => Buff.bytes(e))
+//   }
+//   return pub_nonces.map(e => {
+//     const nonces = Buff.parse(e, 32, 64).map(e =>
+//       ecc.keys.tweak_pubkey(e, tweaks, true)
+//     )
+//     return Buff.join(nonces)
+//   })
+// }
 
 export function get_nonce_coeff (
   group_nonce : Bytes,
   group_key   : Bytes,
   message     : Bytes
 ) : Buff {
-  const gpx = ecc.keys.normalize_32(group_key)
+  const gpx = ecc.keys.convert_32(group_key)
   // Combine all bytes into a message challenge.
   const preimg = buffer([ group_nonce, gpx, message ])
   // Hash the challenge.

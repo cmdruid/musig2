@@ -16,7 +16,8 @@ export default function (t : Test) {
   const tweak1   = musig.util.random(32)
   const tweak2   = musig.util.random(32)
   const options  = {
-    key_tweaks : [ tweak1, tweak2 ]
+    key_tweaks   : [ tweak1, tweak2 ],
+    // nonce_tweaks : [ tweak1, tweak2 ]
   }
 
   // Setup a dummy wallet for each signer.
@@ -60,6 +61,8 @@ export default function (t : Test) {
   // BONUS: Check if the signature is valid using an independent library.
   const { group_pubkey } = ctx
   const isValid2 = schnorr.verify(signature, message, group_pubkey)
+
+  // console.log(musig.ctx.hexify(ctx))
 
   t.test('Testing example demo.', t => {
     t.plan(2)

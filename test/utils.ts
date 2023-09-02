@@ -6,7 +6,7 @@ import {
   MusigConfig,
   MusigOptions,
   musig_config
-} from '../src/schema/config.js'
+} from '../src/config.js'
 
 interface Wallet {
   sec_key   : string

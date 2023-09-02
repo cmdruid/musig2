@@ -1,5 +1,5 @@
 import { Buff, Bytes } from '@cmdcode/buff-utils'
-import { PointState }  from './schema/index.js'
+import { PointState }  from './types.js'
 
 import * as ecc from '@cmdcode/crypto-utils'
 
@@ -12,8 +12,8 @@ export function get_challenge (
   group_pub : Bytes,
   message   : Bytes
 ) : Buff {
-  const grx = ecc.keys.normalize_32(group_rx)
-  const gpx = ecc.keys.normalize_32(group_pub)
+  const grx = ecc.keys.convert_32(group_rx)
+  const gpx = ecc.keys.convert_32(group_pub)
   // Create the challenge pre image.
   const preimg = Buff.join([ grx, gpx, message ])
   // Return the challenge hash.

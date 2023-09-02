@@ -1,7 +1,7 @@
 import { Buff, Bytes }       from '@cmdcode/buff-utils'
 import { CONST, keys, math } from '@cmdcode/crypto-utils'
 import { parse_psig }        from './utils.js'
-import { MusigContext }      from './schema/index.js'
+import { MusigContext }      from './types.js'
 
 import * as assert from './assert.js'
 
@@ -37,7 +37,7 @@ export function combine_sigs (
   const sig = math.modN(s + a)
   // Return the combined signature.
   return Buff.join([
-    keys.normalize_32(group_rx),
+    keys.convert_32(group_rx),
     Buff.big(sig, 32)
   ])
 }
