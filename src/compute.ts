@@ -20,7 +20,7 @@ export function get_challenge (
   return ecc.hash.digest('BIP0340/challenge', preimg)
 }
 
-export function compute_point_state (
+export function get_pt_state (
   int_pt : PointData,
   tweaks : Bytes[] = []
 ) : PointState {

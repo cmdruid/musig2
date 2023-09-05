@@ -20,8 +20,12 @@ import {
   get_challenge,
 } from '../../src/compute.js'
 
-import * as sign   from '../../src/sign.js'
-import * as verify from '../../src/verify.js'
+import { musign } from '../../src/sign.js'
+
+import {
+  verify_musig,
+  verify_psig
+} from '../../src/verify.js'
 
 import vectors from './vectors.json' assert { type : 'json' }
 
@@ -120,7 +124,7 @@ function sign_test (t : Test, v : Vector) {
     t.plan(rounds)
     for (let i = 0; i < rounds; i++) {
       const target = signatures[i]
-      const sig = sign.with_ctx(ctx, sec_keys[i], sec_nonces[i])
+      const sig = musign(ctx, sec_keys[i], sec_nonces[i])
       t.equal(sig.hex, target, `Signatures for member ${i+1} should match.`)
     }
   })
@@ -141,7 +145,7 @@ function verify_psig_test (t : Test, v : Vector) {
   const { group, chall_mesg, opt } = v
   const { pub_keys, pub_nonces, }  = group
   const ctx = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
-  const res = group.signatures.filter(e => !verify.psig(ctx, e))
+  const res = group.signatures.filter(e => !verify_psig(ctx, e))
   const isValid = res.length === 0
   t.test('verify_psig_test', t => {
     t.plan(1)
@@ -153,7 +157,7 @@ function verify_sig_test (t : Test, v : Vector) {
   const { group, group_sig, group_rx, chall_mesg, opt } = v
   const { pub_keys, pub_nonces, } = group
   const session = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
-  const isValid = verify.with_ctx(session, Buff.join([ group_rx, group_sig ]))
+  const isValid = verify_musig(session, Buff.join([ group_rx, group_sig ]))
   t.test('verify_sig_test', t => {
     t.plan(1)
     t.equal(isValid, true, 'Combined signature values should be valid.')

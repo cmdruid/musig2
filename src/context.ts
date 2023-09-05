@@ -5,7 +5,7 @@ import * as ecc from '@cmdcode/crypto-utils'
 
 import {
   compute_R,
-  compute_point_state,
+  get_pt_state,
   get_challenge
 } from './compute.js'
 
@@ -25,13 +25,13 @@ import {
   MusigContext
 } from './types.js'
 
-export function from_pubkeys (
+export function get_key_ctx (
   pubkeys  : Bytes[],
   options ?: MusigOptions
 ) : KeyContext {
   const opt = musig_config(options)
   const [ int_point, key_coeffs ] = combine_pubkeys(pubkeys)
-  const Q            = compute_point_state(int_point, opt.key_tweaks)
+  const Q            = get_pt_state(int_point, opt.key_tweaks)
   const int_pubkey   = ecc.pt.to_bytes(int_point)
   const group_pubkey = ecc.pt.to_bytes(Q.point).slice(1)
 
@@ -44,7 +44,7 @@ export function from_pubkeys (
   }
 }
 
-export function from_nonces (
+export function get_nonce_ctx (
   pub_nonces : Bytes[],
   grp_pubkey : Bytes,
   message    : Bytes
@@ -53,7 +53,7 @@ export function from_nonces (
   const nonce_coeff = get_nonce_coeff(group_nonce, grp_pubkey, message)
   const R_point     = compute_R(group_nonce, nonce_coeff)
   const int_nonce   = ecc.pt.to_bytes(R_point)
-  const R           = compute_point_state(R_point)
+  const R           = get_pt_state(R_point)
   const group_rx    = ecc.pt.to_bytes(R.point).slice(1)
   const challenge   = get_challenge(group_rx, grp_pubkey, message)
 
@@ -75,8 +75,8 @@ export function get_ctx (
   message  : Bytes,
   options ?: MusigOptions
 ) : MusigContext {
-  const key_ctx   = from_pubkeys(pubkeys, options)
-  const nonce_ctx = from_nonces(nonces, key_ctx.group_pubkey, message)
+  const key_ctx   = get_key_ctx(pubkeys, options)
+  const nonce_ctx = get_nonce_ctx(nonces, key_ctx.group_pubkey, message)
   return create_ctx(key_ctx, nonce_ctx, options)
 }
 

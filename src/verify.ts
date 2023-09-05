@@ -1,9 +1,7 @@
 import { Buff, Bytes }   from '@cmdcode/buff-utils'
 import { combine_sigs }  from './combine.js'
-import { get_ctx }       from './context.js'
 import { get_key_coeff } from './pubkey.js'
 import { parse_psig }    from './utils.js'
-import { MusigOptions }  from './config.js'
 import { MusigContext }  from './types.js'
 
 import * as ecc    from '@cmdcode/crypto-utils'
@@ -11,7 +9,7 @@ import * as assert from './assert.js'
 
 const { _G, _N } = ecc.CONST
 
-export function psig (
+export function verify_psig (
   context : MusigContext,
   psig    : Bytes
 ) : boolean {
@@ -34,12 +32,15 @@ export function psig (
   return ecc.pt.to_bytes(S1).hex === ecc.pt.to_bytes(S2).hex
 }
 
-export function with_ctx (
+export function verify_musig (
   context   : MusigContext,
-  signature : Bytes
+  signature : Bytes | Bytes[]
 ) : boolean {
   const { challenge, group_pubkey } = context
-  const [ rx, s ] = Buff.parse(signature, 32, 64)
+  const sig = (Array.isArray(signature))
+    ? combine_sigs(context, signature)
+    : signature
+  const [ rx, s ] = Buff.parse(sig, 32, 64)
   const S  = ecc.pt.mul(_G, s.big)
   const R  = ecc.pt.lift_x(rx, true)
   const P  = ecc.pt.lift_x(group_pubkey, true)
@@ -47,16 +48,4 @@ export function with_ctx (
   const SP = ecc.pt.add(R, ecc.pt.mul(P, c))
   assert.valid_point(S)
   return ecc.pt.eq(S, SP)
-}
-
-export function musign (
-  message    : Bytes,
-  pub_keys   : Bytes[],
-  pub_nonces : Bytes[],
-  signatures : Bytes[],
-  options   ?: MusigOptions
-) : boolean {
-  const ctx = get_ctx(pub_keys, pub_nonces, message, options)
-  const sig = combine_sigs(ctx, signatures)
-  return with_ctx(ctx, sig)
 }

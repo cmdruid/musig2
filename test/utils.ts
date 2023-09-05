@@ -1,6 +1,11 @@
-import { Buff, Bytes }  from '@cmdcode/buff-utils'
-import * as Musig2      from '../src/index.js'
-import { MusigContext } from '../src/index.js'
+import { Buff, Bytes } from '@cmdcode/buff-utils'
+
+import {
+  get_ctx,
+  keys,
+  MusigContext,
+  musign
+} from '../src/index.js'
 
 import {
   MusigConfig,
@@ -35,14 +40,14 @@ export class MusigTest {
         // Generate some random secrets using WebCrypto.
         const secret = Buff.str(signer).digest
         const nonce  = Buff.join([secret.digest, secret.digest.digest])
-        sec_key   = Musig2.keys.get_seckey(secret).hex
-        sec_nonce = Musig2.keys.get_sec_nonce(nonce).hex
+        sec_key   = keys.get_seckey(secret).hex
+        sec_nonce = keys.get_sec_nonce(nonce).hex
       }
       this.wallets.push({
         sec_key,
         sec_nonce,
-        pub_key   : Musig2.keys.get_pubkey(sec_key).hex,
-        pub_nonce : Musig2.keys.get_pub_nonce(sec_nonce).hex
+        pub_key   : keys.get_pubkey(sec_key).hex,
+        pub_nonce : keys.get_pub_nonce(sec_nonce).hex
       })
     }
   }
@@ -56,7 +61,7 @@ export class MusigTest {
   }
 
   get_context (message : string) : MusigContext {
-    return Musig2.ctx.get_ctx(
+    return get_ctx(
       this.pubkeys,
       this.nonces,
       message,
@@ -73,7 +78,7 @@ export class MusigTest {
     const ctx   = this.get_context(message)
     for (const wallet of this.wallets) {
       psigs.push(
-        Musig2.sign.with_ctx (
+        musign (
           ctx,
           wallet.sec_key,
           wallet.sec_nonce

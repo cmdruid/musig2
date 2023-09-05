@@ -4,14 +4,14 @@ import * as Nonce from './nonce.js'
 import * as Pub   from './pubkey.js'
 
 export * from './config.js'
+export * from './context.js'
+export * from './sign.js'
 export * from './types.js'
+export * from './verify.js'
 
 export * as assert from './assert.js'
-export * as ctx    from './context.js'
 export * as keys   from './keys.js'
-export * as sign   from './sign.js'
 export * as util   from './utils.js'
-export * as verify from './verify.js'
 
 export const calc = {
   key_coeff   : Pub.compute_key_coeff,
