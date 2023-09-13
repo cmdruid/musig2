@@ -1,14 +1,15 @@
-import { Buff, Bytes }  from '@cmdcode/buff-utils'
+import { Buff, Bytes } from '@cmdcode/buff'
+import { hash340 }     from '@cmdcode/crypto-tools/hash'
+import { mod_n, pt }   from '@cmdcode/crypto-tools/math'
+import { convert_32b } from '@cmdcode/crypto-tools/keys'
 
-import * as ecc    from '@cmdcode/crypto-utils'
+import {
+  PointData,
+  CONST
+} from '@cmdcode/crypto-tools'
+
 import * as assert from './assert.js'
 import * as util   from './utils.js'
-
-type PointData = ecc.PointData
-
-const buffer = Buff.bytes
-
-const { _G } = ecc.CONST
 
 // export function tweak_nonces (
 //   pub_nonces : Bytes[],
@@ -30,14 +31,14 @@ export function get_nonce_coeff (
   group_key   : Bytes,
   message     : Bytes
 ) : Buff {
-  const gpx = ecc.keys.convert_32(group_key)
+  const gpx = convert_32b(group_key)
   // Combine all bytes into a message challenge.
-  const preimg = buffer([ group_nonce, gpx, message ])
+  const preimg = Buff.bytes([ group_nonce, gpx, message ])
   // Hash the challenge.
-  const bytes  = ecc.hash.digest('MuSig/noncecoef', preimg)
+  const bytes  = hash340('MuSig/noncecoef', preimg)
   // Return bytes as a bigint mod N.
-  const coeff  = ecc.math.modN(bytes.big)
-  return buffer(coeff, 32)
+  const coeff  = mod_n(bytes.big)
+  return Buff.bytes(coeff, 32)
 }
 
 export function combine_nonces (
@@ -60,14 +61,14 @@ export function combine_nonces (
       // Read data into buffer.
       const nonce = nonces[j]
       // Convert nonce value into a point.
-      const n_pt  = ecc.pt.lift_x(nonce)
+      const n_pt  = pt.lift_x(nonce)
       // Add point to current group R point.
-      group_R = ecc.pt.add(group_R, n_pt)
+      group_R = pt.add(group_R, n_pt)
     }
     if (group_R === null) {
       // From spec: there is at least one dishonest signer (except with negligible probability).
       // Continue with arbitrary use of point G so the dishonest signer can be caught later
-      group_R = _G
+      group_R = CONST._G
     }
     // Store our R value for the round.
     points.push(group_R)

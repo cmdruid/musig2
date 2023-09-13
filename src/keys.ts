@@ -1,32 +1,32 @@
-import { Buff, Bytes } from '@cmdcode/buff-utils'
+import { Buff, Bytes } from '@cmdcode/buff'
+import { keys }        from '@cmdcode/crypto-tools'
 
-import * as ecc  from '@cmdcode/crypto-utils'
 import * as util from './utils.js'
 
 export const get_seckey  = (
   seckey : Bytes
 ) : Buff => {
-  return ecc.keys.get_seckey(seckey, true)
+  return keys.get_seckey(seckey, true)
 }
 
 export const get_pubkey  = (
   seckey  : Bytes
 ) : Buff => {
-  return ecc.keys.get_pubkey(seckey, true)
+  return keys.get_pubkey(seckey, true)
 }
 
 export const get_keypair = (
   secret  : Bytes
 ) : Buff[] => {
-  return ecc.keys.get_keypair(secret, true, true)
+  return keys.get_keypair(secret, true, true)
 }
 
 export const gen_seckey = () : Buff => {
-  return ecc.keys.gen_seckey(true)
+  return keys.gen_seckey(true)
 }
 
 export const gen_keypair = () : Buff[] => {
-  return ecc.keys.gen_keypair(true, true)
+  return keys.gen_keypair(true, true)
 }
 
 export function get_sec_nonce (
@@ -53,7 +53,7 @@ export function tweak_sec_nonce (
 ) : Buff {
   const nonces = Buff
     .parse(sec_nonce, 32, 64)
-    .map(e => ecc.keys.tweak_seckey(e, tweaks, true))
+    .map(e => keys.tweak_seckey(e, tweaks, true))
   return Buff.join(nonces)
 }
 
@@ -63,7 +63,7 @@ export function tweak_pub_nonce (
 ) : Buff {
   const nonces = Buff
     .parse(pub_nonce, 32, 64)
-    .map(e => ecc.keys.tweak_pubkey(e, tweaks, true))
+    .map(e => keys.tweak_pubkey(e, tweaks, true))
   return Buff.join(nonces)
 }
 

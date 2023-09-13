@@ -1,5 +1,5 @@
-import { Buff, Bytes }       from '@cmdcode/buff-utils'
-import { CONST, keys, math } from '@cmdcode/crypto-utils'
+import { Buff, Bytes }       from '@cmdcode/buff'
+import { CONST, keys, math } from '@cmdcode/crypto-tools'
 import { parse_psig }        from './utils.js'
 import { MusigContext }      from './types.js'
 
@@ -17,7 +17,7 @@ export function combine_s (
     // Assert key is within range.
     assert.in_field(s_i)
     // Add signature value to s.
-    s = math.modN(s + s_i)
+    s = math.mod_n(s + s_i)
   }
   return s
 }
@@ -34,10 +34,10 @@ export function combine_sigs (
   const s   = combine_s(sigs)
   const e   = challenge.big
   const a   = e * parity * tweak
-  const sig = math.modN(s + a)
+  const sig = math.mod_n(s + a)
   // Return the combined signature.
   return Buff.join([
-    keys.convert_32(group_rx),
+    keys.convert_32b(group_rx),
     Buff.big(sig, 32)
   ])
 }

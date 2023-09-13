@@ -1,12 +1,13 @@
-import { Buff, Bytes }       from '@cmdcode/buff-utils'
-import { sort_keys }         from './utils.js'
+import { Buff, Bytes } from '@cmdcode/buff'
+import { PointData }   from '@cmdcode/crypto-tools'
+import { hash340 }     from '@cmdcode/crypto-tools/hash'
+import { mod_n, pt }   from '@cmdcode/crypto-tools/math'
+import { sort_keys }   from './utils.js'
+import { KeyCoeff }    from './types.js'
+
 import { KeyOperationError } from './error.js'
-import { KeyCoeff }          from './types.js'
 
-import * as ecc    from '@cmdcode/crypto-utils'
 import * as assert from './assert.js'
-
-type PointData = ecc.PointData
 
 function compute_group_hash (
   pubkeys : Bytes[]
@@ -14,14 +15,14 @@ function compute_group_hash (
   // Sort the set of keys in lexicographical order.
   const group_p = sort_keys(pubkeys)
   // Convert the set of keys into a hash.
-  return ecc.hash.digest('KeyAgg list', ...group_p)
+  return hash340('KeyAgg list', ...group_p)
 }
 
 function compute_coeff_hash (
   group_hash : Bytes,
   coeff_key  : Bytes
 ) : Buff {
-  return ecc.hash.digest('KeyAgg coefficient', group_hash, coeff_key)
+  return hash340('KeyAgg coefficient', group_hash, coeff_key)
 }
 
 export function compute_key_coeff (
@@ -33,7 +34,7 @@ export function compute_key_coeff (
   // Return the coeff_key hash.
   const coeff_hash = compute_coeff_hash(group_hash, self_key)
   // Return the coefficient mod N.
-  return Buff.big(ecc.math.modN(coeff_hash.big), 32)
+  return Buff.big(mod_n(coeff_hash.big), 32)
 }
 
 export function combine_pubkeys (
@@ -54,7 +55,7 @@ export function combine_pubkeys (
     // Add the key coeff to the map.
     coeffs.push([ key.hex, c ])
     // NOTE: Current spec forces xonly keys here.
-    const P = ecc.pt.lift_x(key)
+    const P = pt.lift_x(key)
     // Check if point is null.
     if (P === null) {
       // Report key for returning null.
@@ -65,9 +66,9 @@ export function combine_pubkeys (
       })
     }
     // Multiply pubkey with its coefficient.
-    const mP = ecc.pt.mul(P, c.big)
+    const mP = pt.mul(P, c.big)
     // Add the point to our sum.
-    group_P = ecc.pt.add(group_P, mP)
+    group_P = pt.add(group_P, mP)
     // Check if group point is null.
     if (group_P === null) {
       // Report key for returning null.

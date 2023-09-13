@@ -51,8 +51,8 @@
     "release": "yarn clean && yarn test && yarn types && yarn lint && yarn build"
   },
   "devDependencies": {
-    "@cmdcode/buff-utils": "^2.0.0",
-    "@cmdcode/crypto-utils": "^2.4.5",
+    "@cmdcode/buff": "^2.0.2",
+    "@cmdcode/crypto-tools": "^2.4.10",
     "@noble/curves": "^1.1.0",
     "@rollup/plugin-commonjs": "^23.0.2",
     "@rollup/plugin-node-resolve": "^15.0.1",

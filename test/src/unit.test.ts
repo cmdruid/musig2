@@ -1,6 +1,6 @@
 import { Test } from 'tape'
-import { Buff } from '@cmdcode/buff-utils'
-import { pt }   from '@cmdcode/crypto-utils'
+import { Buff } from '@cmdcode/buff'
+import { math } from '@cmdcode/crypto-tools'
 
 import { get_ctx }      from '../../src/context.js'
 import { combine_sigs } from '../../src/combine.js'
@@ -30,6 +30,8 @@ import {
 import vectors from './vectors.json' assert { type : 'json' }
 
 type Vector = typeof vectors[0]
+
+const { pt } = math
 
 export default function (t : Test) {
   t.comment('Performing unit tests.')

@@ -1,7 +1,7 @@
-import { Buff, Bytes }     from '@cmdcode/buff-utils'
+import { Buff, Bytes }     from '@cmdcode/buff'
 import { combine_pubkeys } from './pubkey.js'
 
-import * as ecc from '@cmdcode/crypto-utils'
+import { pt } from '@cmdcode/crypto-tools/math'
 
 import {
   compute_R,
@@ -25,15 +25,18 @@ import {
   MusigContext
 } from './types.js'
 
+import * as assert from './assert.js'
+
 export function get_key_ctx (
   pubkeys  : Bytes[],
   options ?: MusigOptions
 ) : KeyContext {
+  pubkeys.forEach(e => { assert.size(e, 32) })
   const opt = musig_config(options)
   const [ int_point, key_coeffs ] = combine_pubkeys(pubkeys)
   const Q            = get_pt_state(int_point, opt.key_tweaks)
-  const int_pubkey   = ecc.pt.to_bytes(int_point)
-  const group_pubkey = ecc.pt.to_bytes(Q.point).slice(1)
+  const int_pubkey   = pt.to_bytes(int_point)
+  const group_pubkey = pt.to_bytes(Q.point).slice(1)
 
   return {
     Q,
@@ -49,12 +52,14 @@ export function get_nonce_ctx (
   grp_pubkey : Bytes,
   message    : Bytes
 ) : NonceContext {
+  assert.size(grp_pubkey, 32)
+  pub_nonces.forEach(e => { assert.size(e, 64) })
   const group_nonce = combine_nonces(pub_nonces)
   const nonce_coeff = get_nonce_coeff(group_nonce, grp_pubkey, message)
   const R_point     = compute_R(group_nonce, nonce_coeff)
-  const int_nonce   = ecc.pt.to_bytes(R_point)
+  const int_nonce   = pt.to_bytes(R_point)
   const R           = get_pt_state(R_point)
-  const group_rx    = ecc.pt.to_bytes(R.point).slice(1)
+  const group_rx    = pt.to_bytes(R.point).slice(1)
   const challenge   = get_challenge(group_rx, grp_pubkey, message)
 
   return {

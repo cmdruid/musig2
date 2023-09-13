@@ -1,5 +1,5 @@
-import { Buff }         from '@cmdcode/buff-utils'
-import { PointData }    from '@cmdcode/crypto-utils'
+import { Buff }         from '@cmdcode/buff'
+import { PointData }    from '@cmdcode/crypto-tools'
 import { MusigOptions } from './config.js'
 
 interface Return<T> {

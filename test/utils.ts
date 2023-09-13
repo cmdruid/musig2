@@ -1,4 +1,4 @@
-import { Buff, Bytes } from '@cmdcode/buff-utils'
+import { Buff, Bytes } from '@cmdcode/buff'
 
 import {
   get_ctx,

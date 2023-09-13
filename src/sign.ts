@@ -1,5 +1,5 @@
-import { Buff, Bytes }   from '@cmdcode/buff-utils'
-import { math }          from '@cmdcode/crypto-utils'
+import { Buff, Bytes }   from '@cmdcode/buff'
+import { math }          from '@cmdcode/crypto-tools'
 import { compute_s }     from './compute.js'
 import { get_key_coeff } from './pubkey.js'
 import { MusigContext }  from './types.js'
@@ -22,7 +22,7 @@ export function musign (
   const [ sec, pub ] = get_keypair(secret)
   // Get the coeff for our pubkey.
   const p_v = get_key_coeff(pub, key_coeffs).big
-  const sk  = math.modN(Q.parity * Q.state * sec.big)
+  const sk  = math.mod_n(Q.parity * Q.state * sec.big)
   const cha = util.buffer(challenge).big
   const n_v = util.buffer(nonce_coeff).big
   // Calculate our pub nonce.

@@ -1,4 +1,4 @@
-import { Bytes } from '@cmdcode/buff-utils'
+import { Bytes } from '@cmdcode/buff'
 
 export type MusigOptions = Partial<MusigConfig>
 

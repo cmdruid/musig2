@@ -1,18 +1,15 @@
-import { buffer, Bytes }       from '@cmdcode/buff-utils'
-import { math, pt, PointData } from '@cmdcode/crypto-utils'
-import { KeyOperationError }   from './error.js'
+import { buffer, Bytes }     from '@cmdcode/buff'
+import { math, PointData }   from '@cmdcode/crypto-tools'
+import { KeyOperationError } from './error.js'
 
-export function byte_size (
-  input  : Bytes,
-  size  ?: number
-) : boolean {
-  if (typeof size === 'number') {
-    const bytes = buffer(input)
-    if (bytes.length !== size) {
-      throw new TypeError(`Invalid byte size: ${bytes.hex} !== ${size}`)
-    }
+export function size (
+  input : Bytes,
+  size  : number
+) : void {
+  const bytes = buffer(input)
+  if (bytes.length !== size) {
+    throw new TypeError(`Invalid byte size: ${bytes.hex} !== ${size}`)
   }
-  return true
 }
 
 export function nonce_total_size (
@@ -71,5 +68,5 @@ export function in_field (bytes : Bytes) : void {
 export function valid_point (
   point : PointData | null
 ) : asserts point is PointData {
-  pt.assert_valid(point)
+  math.pt.assert_valid(point)
 }
