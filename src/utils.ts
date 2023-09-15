@@ -1,14 +1,9 @@
-import { Buff, Bytes } from '@cmdcode/buff'
+import { Buff, buffer, Bytes } from '@cmdcode/buff'
+
+import { PointData }   from '@cmdcode/crypto-tools'
 import { convert_32b } from '@cmdcode/crypto-tools/keys'
 import { pt }          from '@cmdcode/crypto-tools/math'
 import { PartialSig }  from './types.js'
-
-import * as ecc from '@cmdcode/crypto-tools'
-
-type PointData = ecc.PointData
-
-export const buffer = Buff.bytes
-export const random = Buff.random
 
 export function hash_str (str : string) : Buff {
   return Buff.str(str).digest

@@ -3,9 +3,9 @@
 A simple and easy-to-use musig2 library, written in typescript.
 
 - Simplified version of the latest musig2 protocol [BIP0327](https://github.com/bitcoin/bips/blob/master/bip-0327.mediawiki).
-- Use four simple methods for an entire signing session: `get_ctx`, `sign`, `combine` and `verify`.
+- Uses four simple methods for a signing session: `get_ctx`, `musign`, `combine_psigs` and `verify`.
 - Supports key tweaking for taproot script paths.
-- Includes `keys` util for generates keys and nonce values.
+- Includes `keys` util for generating proper keys and nonce values.
 
 > NOTE: This library is still under development. Expect dragons!  
 
@@ -56,7 +56,7 @@ import * as musig from '@cmdcode/musig2'
   // Let's also add some additional key tweaks.
   const tweak1  = musig.util.random(32)
   const tweak2  = musig.util.random(32)
-  const options = { tweaks : [ tweak1, tweak2 ], commit_tweaks: false }
+  const options = { key_tweaks : [ tweak1, tweak2 ] }
 
   // Setup a dummy wallet for each signer.
   for (const name of signers) {

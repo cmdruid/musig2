@@ -11,21 +11,6 @@ import {
 import * as assert from './assert.js'
 import * as util   from './utils.js'
 
-// export function tweak_nonces (
-//   pub_nonces : Bytes[],
-//   tweaks     : Bytes[]
-// ) : Buff[] {
-//   if (tweaks.length === 0) {
-//     return pub_nonces.map(e => Buff.bytes(e))
-//   }
-//   return pub_nonces.map(e => {
-//     const nonces = Buff.parse(e, 32, 64).map(e =>
-//       ecc.keys.tweak_pubkey(e, tweaks, true)
-//     )
-//     return Buff.join(nonces)
-//   })
-// }
-
 export function get_nonce_coeff (
   group_nonce : Bytes,
   group_key   : Bytes,

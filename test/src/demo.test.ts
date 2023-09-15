@@ -1,12 +1,12 @@
 import { Test }    from 'tape'
+import { Buff }    from '@cmdcode/buff'
 import { schnorr } from '@noble/curves/secp256k1'
 
 import {
-  combine,
   get_ctx,
   keys,
   musign,
-  util,
+  combine_psigs,
   verify_musig
 } from '../../src/index.js'
 
@@ -21,8 +21,8 @@ export default function (t : Test) {
   // We'll store each member's wallet in an array.
   const wallets : any[] = []
   // Let's also add some additional key tweaks.
-  const tweak1   = util.random(32)
-  const tweak2   = util.random(32)
+  const tweak1   = Buff.random(32)
+  const tweak2   = Buff.random(32)
   const options  = {
     key_tweaks   : [ tweak1, tweak2 ],
     // nonce_tweaks : [ tweak1, tweak2 ]
@@ -31,8 +31,8 @@ export default function (t : Test) {
   // Setup a dummy wallet for each signer.
   for (const name of signers) {
     // Generate some random secrets using WebCrypto.
-    const secret = util.random(32)
-    const nonce  = util.random(64)
+    const secret = Buff.random(32)
+    const nonce  = Buff.random(64)
     // Create a pair of signing keys.
     const [ sec_key, pub_key     ] = keys.get_keypair(secret)
     // Create a pair of nonces (numbers only used once).
@@ -61,7 +61,7 @@ export default function (t : Test) {
   })
 
   // Combine all the partial signatures into our final signature.
-  const signature = combine.psigs(ctx, group_sigs)
+  const signature = combine_psigs(ctx, group_sigs)
 
   // Check if the signature is valid.
   const isValid1 = verify_musig(ctx, signature)

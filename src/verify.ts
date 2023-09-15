@@ -1,10 +1,10 @@
 import { Buff, Bytes }   from '@cmdcode/buff'
-import { combine_sigs }  from './combine.js'
-import { get_key_coeff } from './pubkey.js'
-import { parse_psig }    from './utils.js'
-import { MusigContext }  from './types.js'
 import { CONST }         from '@cmdcode/crypto-tools'
 import { pt }            from '@cmdcode/crypto-tools/math'
+import { get_key_coeff } from './pubkey.js'
+import { combine_psigs } from './sign.js'
+import { parse_psig }    from './utils.js'
+import { MusigContext }  from './types.js'
 
 import * as assert from './assert.js'
 
@@ -14,9 +14,12 @@ export function verify_psig (
   context : MusigContext,
   psig    : Bytes
 ) : boolean {
-  const { challenge, Q, R, key_coeffs, nonce_coeff } = context
+  const { challenge, key_coeffs, nonce_coeff } = context
+  const { group_state, nonce_state } = context
   const { sig, pubkey, nonces } = parse_psig(psig)
   assert.in_field(sig)
+  const Q    = group_state
+  const R    = nonce_state
   const kvec = get_key_coeff(pubkey, key_coeffs)
   const P    = pt.lift_x(pubkey)
   const g_P  = (Q.parity * Q.state) % _N
@@ -39,7 +42,7 @@ export function verify_musig (
 ) : boolean {
   const { challenge, group_pubkey } = context
   const sig = (Array.isArray(signature))
-    ? combine_sigs(context, signature)
+    ? combine_psigs(context, signature)
     : signature
   const [ rx, s ] = Buff.parse(sig, 32, 64)
   const S  = pt.mul(_G, s.big)

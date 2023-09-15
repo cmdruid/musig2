@@ -1,9 +1,7 @@
-import { Test } from 'tape'
-import { Buff } from '@cmdcode/buff'
-import { math } from '@cmdcode/crypto-tools'
-
-import { get_ctx }      from '../../src/context.js'
-import { combine_sigs } from '../../src/combine.js'
+import { Test }    from 'tape'
+import { Buff }    from '@cmdcode/buff'
+import { math }    from '@cmdcode/crypto-tools'
+import { get_ctx } from '../../src/context.js'
 
 import {
   combine_pubkeys,
@@ -20,7 +18,10 @@ import {
   get_challenge,
 } from '../../src/compute.js'
 
-import { musign } from '../../src/sign.js'
+import {
+  musign,
+  combine_psigs
+} from '../../src/sign.js'
 
 import {
   verify_musig,
@@ -136,7 +137,7 @@ function combine_sigs_test (t : Test, v : Vector) {
   const { group, group_sig, chall_mesg, opt } = v
   const { pub_keys, pub_nonces } = group
   const session = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
-  const ret = combine_sigs(session, group.signatures)
+  const ret = combine_psigs(session, group.signatures)
   t.test('combine_s_test', t => {
     t.plan(1)
     t.equal(ret.slice(32, 64).hex, group_sig, 'Combined s values should match.')

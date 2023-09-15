@@ -1,8 +1,6 @@
 import { Buff, Bytes } from '@cmdcode/buff'
 import { keys }        from '@cmdcode/crypto-tools'
 
-import * as util from './utils.js'
-
 export const get_seckey  = (
   seckey : Bytes
 ) : Buff => {
@@ -47,26 +45,6 @@ export function get_pub_nonce (
   return Buff.join(nonces)
 }
 
-export function tweak_sec_nonce (
-  sec_nonce : Bytes,
-  tweaks    : Bytes[] = []
-) : Buff {
-  const nonces = Buff
-    .parse(sec_nonce, 32, 64)
-    .map(e => keys.tweak_seckey(e, tweaks, true))
-  return Buff.join(nonces)
-}
-
-export function tweak_pub_nonce (
-  pub_nonce : Bytes,
-  tweaks    : Bytes[] = []
-) : Buff {
-  const nonces = Buff
-    .parse(pub_nonce, 32, 64)
-    .map(e => keys.tweak_pubkey(e, tweaks, true))
-  return Buff.join(nonces)
-}
-
 export function get_nonce_pair (
   secret : Bytes
 ) : Buff[]  {
@@ -76,6 +54,6 @@ export function get_nonce_pair (
 }
 
 export function gen_nonce_pair () : Buff[] {
-  const seed = util.random(64)
+  const seed = Buff.random(64)
   return get_nonce_pair(seed)
 }

@@ -1,6 +1,6 @@
-import { Buff }         from '@cmdcode/buff'
-import { PointData }    from '@cmdcode/crypto-tools'
-import { MusigOptions } from './config.js'
+import { Buff }        from '@cmdcode/buff'
+import { PointData }   from '@cmdcode/crypto-tools'
+import { MusigConfig } from './config.js'
 
 interface Return<T> {
   ok   : true
@@ -33,11 +33,12 @@ export interface PointState {
 }
 
 export interface KeyContext {
-  pub_keys     : Buff[]
-  int_pubkey   : Buff
-  group_pubkey : Buff
-  key_coeffs   : KeyCoeff[]
-  Q            : PointState
+  group_state   : PointState
+  group_pubkey  : Buff
+  int_state    ?: PointState
+  int_pubkey   ?: Buff
+  key_coeffs    : KeyCoeff[]
+  pub_keys      : Buff[]
 }
 
 export interface NonceContext {
@@ -45,7 +46,7 @@ export interface NonceContext {
   pub_nonces   : Buff[]
   int_nonce    : Buff
   group_nonce  : Buff
-  R            : PointState
+  nonce_state  : PointState
   nonce_coeff  : Buff
   group_rx     : Buff
   challenge    : Buff
@@ -53,7 +54,7 @@ export interface NonceContext {
 
 export type MusigContext = KeyContext   &
                            NonceContext &
-                           { options : MusigOptions }
+                           { config : MusigConfig }
 
 export interface PartialSig {
   sig    : Buff

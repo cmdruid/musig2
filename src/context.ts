@@ -28,22 +28,33 @@ import {
 import * as assert from './assert.js'
 
 export function get_key_ctx (
-  pubkeys  : Bytes[],
-  options ?: MusigOptions
+  pubkeys : Bytes[]
 ) : KeyContext {
   pubkeys.forEach(e => { assert.size(e, 32) })
-  const opt = musig_config(options)
-  const [ int_point, key_coeffs ] = combine_pubkeys(pubkeys)
-  const Q            = get_pt_state(int_point, opt.key_tweaks)
-  const int_pubkey   = pt.to_bytes(int_point)
-  const group_pubkey = pt.to_bytes(Q.point).slice(1)
-
+  const [ point, key_coeffs ] = combine_pubkeys(pubkeys)
+  const group_state  = get_pt_state(point)
+  const group_pubkey = pt.to_bytes(point).slice(1)
   return {
-    Q,
-    key_coeffs,
-    int_pubkey,
+    group_state,
     group_pubkey,
+    key_coeffs,
     pub_keys: pubkeys.map(e => Buff.bytes(e))
+  }
+}
+
+export function tweak_key_ctx (
+  context : KeyContext,
+  tweaks ?: Bytes[]
+) : KeyContext {
+  const { group_state, group_pubkey } = context
+  const twk_state  = get_pt_state(group_state.point, tweaks)
+  const twk_pubkey = pt.to_bytes(twk_state.point).slice(1)
+  return {
+    ...context,
+    int_state    : group_state,
+    int_pubkey   : group_pubkey,
+    group_state  : twk_state,
+    group_pubkey : twk_pubkey
   }
 }
 
@@ -58,15 +69,15 @@ export function get_nonce_ctx (
   const nonce_coeff = get_nonce_coeff(group_nonce, grp_pubkey, message)
   const R_point     = compute_R(group_nonce, nonce_coeff)
   const int_nonce   = pt.to_bytes(R_point)
-  const R           = get_pt_state(R_point)
-  const group_rx    = pt.to_bytes(R.point).slice(1)
+  const nonce_state = get_pt_state(R_point)
+  const group_rx    = pt.to_bytes(nonce_state.point).slice(1)
   const challenge   = get_challenge(group_rx, grp_pubkey, message)
 
   return {
     group_nonce,
     nonce_coeff,
     int_nonce,
-    R,
+    nonce_state,
     group_rx,
     challenge,
     message    : Buff.bytes(message),
@@ -80,7 +91,11 @@ export function get_ctx (
   message  : Bytes,
   options ?: MusigOptions
 ) : MusigContext {
-  const key_ctx   = get_key_ctx(pubkeys, options)
+  const { key_tweaks = [] } = options ?? {}
+  let key_ctx = get_key_ctx(pubkeys)
+  if (key_tweaks.length > 0) {
+    key_ctx = tweak_key_ctx(key_ctx, key_tweaks)
+  }
   const nonce_ctx = get_nonce_ctx(nonces, key_ctx.group_pubkey, message)
   return create_ctx(key_ctx, nonce_ctx, options)
 }
@@ -90,8 +105,8 @@ export function create_ctx (
   non_ctx  : NonceContext,
   options ?: MusigOptions
 ) : MusigContext {
-  const opt = musig_config(options)
-  return { ...key_ctx, ...non_ctx, options: opt }
+  const config = musig_config(options)
+  return { ...key_ctx, ...non_ctx, config }
 }
 
 export function hexify (
