@@ -6,4 +6,4 @@ export * from './verify.js'
 
 export * as assert from './assert.js'
 export * as keys   from './keys.js'
-export * as util   from './utils.js'
+export * as util   from './util.js'

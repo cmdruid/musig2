@@ -1,13 +1,18 @@
 {
   "compilerOptions": {
+    "baseUrl": "..",
+    "paths": {
+      "@cmdcode/musig2"         : [ "src/index.js"   ],
+      "@cmdcode/musig2/assert"  : [ "src/assert.js"  ],
+      "@cmdcode/musig2/context" : [ "src/context.js" ],
+      "@cmdcode/musig2/keys"    : [ "src/keys.js"    ],
+      "@cmdcode/musig2/sign"    : [ "src/sign.js"    ],
+      "@cmdcode/musig2/util"    : [ "src/util.js"    ],
+      "@cmdcode/musig2/verify"  : [ "src/verify.js"  ],
+    },
     "module": "NodeNext",
     "target": "ESNext",
     "moduleResolution": "NodeNext",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
     "importHelpers": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -23,9 +28,10 @@
     "noImplicitAny": true,
     "noImplicitThis": true,
     "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "exclude": ["node_modules", "test"],
-  "include": ["src/**/*.ts"]
+  "exclude": [ "node_modules" ],
+  "include": [ "**/*.ts" ]
 }

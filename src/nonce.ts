@@ -9,7 +9,7 @@ import {
 } from '@cmdcode/crypto-tools'
 
 import * as assert from './assert.js'
-import * as util   from './utils.js'
+import * as util   from './util.js'
 
 export function get_nonce_coeff (
   group_nonce : Bytes,

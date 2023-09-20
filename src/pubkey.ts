@@ -2,7 +2,7 @@ import { Buff, Bytes } from '@cmdcode/buff'
 import { PointData }   from '@cmdcode/crypto-tools'
 import { hash340 }     from '@cmdcode/crypto-tools/hash'
 import { mod_n, pt }   from '@cmdcode/crypto-tools/math'
-import { sort_keys }   from './utils.js'
+import { sort_keys }   from './util.js'
 import { KeyCoeff }    from './types.js'
 
 import { KeyOperationError } from './error.js'

@@ -1,7 +1,7 @@
 import { Buff, Bytes }   from '@cmdcode/buff'
 import { compute_s }     from './compute.js'
 import { get_key_coeff } from './pubkey.js'
-import { parse_psig }    from './utils.js'
+import { parse_psig }    from './util.js'
 import { MusigContext }  from './types.js'
 
 import {
@@ -12,7 +12,7 @@ import {
 
 import {
   get_keypair,
-  get_pub_nonce
+  get_nonce_pair
 } from './keys.js'
 
 import * as assert from './assert.js'
@@ -55,15 +55,16 @@ export function combine_psigs (
 }
 
 export function musign (
-  context   : MusigContext,
-  secret    : Bytes,
-  sec_nonce : Bytes
+  context : MusigContext,
+  secret  : Bytes,
+  snonce  : Bytes
 ) : Buff {
   // Unpack the context we will use.
   const { challenge, key_coeffs, nonce_coeff } = context
   const { group_state, nonce_state } = context
-  // Load secret key into buffer.
+  // Load secret key and nonce values.
   const [ sec, pub ] = get_keypair(secret)
+  const [ snp, pn  ] = get_nonce_pair(snonce)
   // Get the coeff for our pubkey.
   const Q   = group_state
   const R   = nonce_state
@@ -71,10 +72,8 @@ export function musign (
   const sk  = math.mod_n(Q.parity * Q.state * sec.big)
   const cha = Buff.bytes(challenge).big
   const n_v = Buff.bytes(nonce_coeff).big
-  // Calculate our pub nonce.
-  const pn  = get_pub_nonce(sec_nonce)
   // Negate our sec nonce if needed.
-  const sn  = Buff.parse(sec_nonce, 32, 64).map(e => {
+  const sn  = Buff.parse(snp, 32, 64).map(e => {
     // Negate our nonce values if needed.
     return R.parity * e.big
   })

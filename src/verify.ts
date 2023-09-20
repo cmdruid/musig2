@@ -3,7 +3,7 @@ import { CONST }         from '@cmdcode/crypto-tools'
 import { pt }            from '@cmdcode/crypto-tools/math'
 import { get_key_coeff } from './pubkey.js'
 import { combine_psigs } from './sign.js'
-import { parse_psig }    from './utils.js'
+import { parse_psig }    from './util.js'
 import { MusigContext }  from './types.js'
 
 import * as assert from './assert.js'
