@@ -1,5 +1,4 @@
 import { Buff, Bytes }   from '@cmdcode/buff'
-import { apply_sn, compute_ps, compute_s }     from './compute.js'
 import { get_key_coeff } from './pubkey.js'
 import { parse_psig }    from './util.js'
 import { MusigContext }  from './types.js'
@@ -9,6 +8,12 @@ import {
   keys,
   math
 } from '@cmdcode/crypto-tools'
+
+import {
+  apply_sn,
+  compute_ps,
+  compute_s
+} from './compute.js'
 
 import {
   get_keypair,
@@ -96,10 +101,10 @@ export function cosign_key (
   const p_v = get_key_coeff(pub, key_coeffs).big
   const sk  = math.mod_n(Q.parity * Q.state * sec.big)
   const cha = Buff.bytes(challenge).big
-  // Get partial signature.
-  const ps  = compute_ps(sk, p_v, cha)
+  // Get cosignable signature.
+  const csig = compute_ps(sk, p_v, cha)
   // Return partial signature.
-  return Buff.join([ ps, pub ])
+  return Buff.join([ csig, pub ])
 }
 
 export function cosign_nonce (
