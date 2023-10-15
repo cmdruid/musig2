@@ -118,3 +118,32 @@ export function compute_s (
 
   return Buff.big(s, 32)
 }
+
+export function compute_ps (
+  secret_key  : bigint,
+  key_coeff   : bigint,
+  challenge   : bigint
+) : Buff {
+  // Similar to typical schnorr signing,
+  // with an added group coefficient tweak.
+  const ps = mod_n(challenge * key_coeff * secret_key)
+  return Buff.big(ps, 32)
+}
+
+export function apply_sn (
+  ps  : bigint,
+  sns : bigint[],
+  ncf : bigint
+) : Buff {
+  for (let j = 0; j < sns.length; j++) {
+    // Set our nonce value for the round.
+    const r = sns[j]
+    // Compute our nonce coeff.
+    const c = pow_n(ncf, BigInt(j))
+    // Apply the nonce and coeff tweak.
+    ps += (r * c)
+    // Squash our signature back into the field.
+    ps = mod_n(ps)
+  }
+  return Buff.big(ps, 32)
+}

@@ -1,5 +1,5 @@
 import { Buff, Bytes }   from '@cmdcode/buff'
-import { compute_s }     from './compute.js'
+import { apply_sn, compute_ps, compute_s }     from './compute.js'
 import { get_key_coeff } from './pubkey.js'
 import { parse_psig }    from './util.js'
 import { MusigContext }  from './types.js'
@@ -79,6 +79,52 @@ export function musign (
   })
   // Get partial signature.
   const psig = compute_s(sk, p_v, cha, sn, n_v)
+  // Return partial signature.
+  return Buff.join([ psig, pub, pn ])
+}
+
+export function cosign_key (
+  context : MusigContext,
+  secret  : Bytes
+) : Buff {
+  // Unpack the context we will use.
+  const { challenge, group_state, key_coeffs } = context
+  // Load secret key and nonce values.
+  const [ sec, pub ] = get_keypair(secret)
+  // Get the coeff for our pubkey.
+  const Q   = group_state
+  const p_v = get_key_coeff(pub, key_coeffs).big
+  const sk  = math.mod_n(Q.parity * Q.state * sec.big)
+  const cha = Buff.bytes(challenge).big
+  // Get partial signature.
+  const ps  = compute_ps(sk, p_v, cha)
+  // Return partial signature.
+  return Buff.join([ ps, pub ])
+}
+
+export function cosign_nonce (
+  context : MusigContext,
+  cosig   : Bytes,
+  snonce  : Bytes
+) : Buff {
+  // Unpack the context we will use.
+  const buffer = Buff.bytes(cosig)
+  assert.size(buffer, 64)
+  const ps  = buffer.subarray(0, 32)
+  const pub = buffer.subarray(32, 64)
+  const { nonce_coeff, nonce_state } = context
+  // Load secret key and nonce values.
+  const [ snp, pn ] = get_nonce_pair(snonce)
+  // Get the coeff for our pubkey.
+  const R   = nonce_state
+  const n_v = Buff.bytes(nonce_coeff).big
+  // Negate our sec nonce if needed.
+  const sn  = Buff.parse(snp, 32, 64).map(e => {
+    // Negate our nonce values if needed.
+    return R.parity * e.big
+  })
+  // Get partial signature.
+  const psig = apply_sn(ps.big, sn, n_v)
   // Return partial signature.
   return Buff.join([ psig, pub, pn ])
 }
