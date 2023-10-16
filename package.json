@@ -10,7 +10,7 @@
     "utils",
     "library"
   ],
-  "version": "2.3.1",
+  "version": "2.3.2",
   "type": "module",
   "main": "./dist/main.cjs",
   "unpkg": "./dist/browser.js",
@@ -72,8 +72,8 @@
     "release": "yarn clean && yarn test && yarn types && yarn lint && yarn build"
   },
   "dependencies": {
-    "@cmdcode/buff": "^2.0.3",
-    "@cmdcode/crypto-tools": "^2.5.0"
+    "@cmdcode/buff": "^2.0.4",
+    "@cmdcode/crypto-tools": "^2.5.1"
   },
   "devDependencies": {
     "@noble/curves": "^1.1.0",
