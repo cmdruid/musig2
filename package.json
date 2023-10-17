@@ -10,7 +10,7 @@
     "utils",
     "library"
   ],
-  "version": "2.3.2",
+  "version": "2.3.3",
   "type": "module",
   "main": "./dist/main.cjs",
   "unpkg": "./dist/browser.js",
@@ -72,31 +72,31 @@
     "release": "yarn clean && yarn test && yarn types && yarn lint && yarn build"
   },
   "dependencies": {
-    "@cmdcode/buff": "^2.0.4",
-    "@cmdcode/crypto-tools": "^2.5.1"
+    "@cmdcode/buff": "^2.1.1",
+    "@cmdcode/crypto-tools": "^2.5.2"
   },
   "devDependencies": {
     "@noble/curves": "^1.1.0",
-    "@rollup/plugin-commonjs": "^25.0.4",
-    "@rollup/plugin-node-resolve": "^15.0.1",
-    "@rollup/plugin-terser": "^0.4.0",
-    "@rollup/plugin-typescript": "^11.1.3",
-    "@types/node": "^20.6.3",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@types/node": "^20.8.6",
     "@types/tape": "^5.6.1",
-    "@typescript-eslint/eslint-plugin": "^6.7.2",
-    "@typescript-eslint/parser": "^6.7.2",
-    "eslint": "^8.49.0",
-    "eslint-config-standard-with-typescript": "^39.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.8.0",
+    "@typescript-eslint/parser": "^6.8.0",
+    "eslint": "^8.51.0",
+    "eslint-config-standard-with-typescript": "^39.1.1",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-n": "^16.1.0",
+    "eslint-plugin-n": "^16.2.0",
     "eslint-plugin-promise": "^6.1.1",
     "nyc": "^15.1.0",
-    "rollup": "^3.29.2",
+    "rollup": "^4.1.4",
     "tap-spec": "^5.0.0",
-    "tape": "^5.6.1",
+    "tape": "^5.7.1",
     "ts-node": "^10.9.1",
     "tslib": "^2.6.2",
-    "tsx": "^3.12.10",
+    "tsx": "^3.13.0",
     "typescript": "^5.1.6"
   }
 }
