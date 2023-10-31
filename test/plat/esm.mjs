@@ -1,4 +1,4 @@
-import { keys } from '../src/index.js'
+import { keys } from '../../dist/index.js'
 
 const [ sec, pub ] = keys.gen_keypair()
 const [ sn, pn   ] = keys.gen_nonce_pair()

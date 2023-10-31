@@ -1,4 +1,4 @@
-import { keys } from '../src/index.js'
+const { keys } = require('../../dist/main.cjs')
 
 const [ sec, pub ] = keys.gen_keypair()
 const [ sn, pn   ] = keys.gen_nonce_pair()
