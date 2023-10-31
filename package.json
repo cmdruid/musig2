@@ -10,7 +10,7 @@
     "utils",
     "library"
   ],
-  "version": "2.3.3",
+  "version": "2.4.0",
   "type": "module",
   "main": "./dist/main.cjs",
   "unpkg": "./dist/browser.js",
@@ -62,18 +62,15 @@
     "dist"
   ],
   "scripts": {
-    "build": "rollup -c rollup.config.ts --configPlugin typescript",
-    "clean": "rm -rf dist/* coverage .nyc_output",
-    "scratch": "tsx test/scratch.ts",
+    "build": "./build.sh",
     "lint": "eslint . --ext .ts",
-    "fix": "eslint --fix . --ext .ts",
-    "test": "nyc --reporter=lcov tsx test/tape.ts | tap-spec; nyc report ---reporter=text",
-    "types": "tsc",
-    "release": "yarn clean && yarn test && yarn types && yarn lint && yarn build"
+    "release": "yarn test && yarn lint && yarn build",
+    "scratch": "tsx test/scratch.ts",
+    "test": "tsx test/tape.ts"
   },
   "dependencies": {
-    "@cmdcode/buff": "^2.1.1",
-    "@cmdcode/crypto-tools": "^2.5.2"
+    "@cmdcode/buff": "^2.2.1",
+    "@cmdcode/crypto-tools": "^2.6.0"
   },
   "devDependencies": {
     "@noble/curves": "^1.1.0",
@@ -90,11 +87,8 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-n": "^16.2.0",
     "eslint-plugin-promise": "^6.1.1",
-    "nyc": "^15.1.0",
     "rollup": "^4.1.4",
-    "tap-spec": "^5.0.0",
     "tape": "^5.7.1",
-    "ts-node": "^10.9.1",
     "tslib": "^2.6.2",
     "tsx": "^3.13.0",
     "typescript": "^5.1.6"
