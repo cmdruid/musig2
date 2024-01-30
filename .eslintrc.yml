@@ -63,5 +63,3 @@ ignorePatterns:
   - dist
   - test
   - rollup.config.ts
-  - src/class
-  - src/escrow
