@@ -3,11 +3,13 @@ import { Bytes } from '@cmdcode/buff'
 export type MusigOptions = Partial<MusigConfig>
 
 export interface MusigConfig {
-  key_tweaks : Bytes[]
+  adaptor_tweaks : Bytes[]
+  key_tweaks     : Bytes[]
 }
 
 export const MUSIG_DEFAULTS = {
-  key_tweaks: []
+  adaptor_tweaks : [],
+  key_tweaks     : []
 }
 
 export const CONST = {

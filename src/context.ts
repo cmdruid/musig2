@@ -43,11 +43,12 @@ export function get_key_ctx (
 }
 
 export function tweak_key_ctx (
-  context : KeyContext,
-  tweaks ?: Bytes[]
+  context   : KeyContext,
+  adaptors ?: Bytes[],
+  tweaks   ?: Bytes[]
 ) : KeyContext {
   const { group_state, group_pubkey } = context
-  const twk_state  = get_pt_state(group_state.point, tweaks)
+  const twk_state  = get_pt_state(group_state.point, adaptors, tweaks)
   const twk_pubkey = pt.to_bytes(twk_state.point).slice(1)
   return {
     ...context,
@@ -91,11 +92,9 @@ export function get_ctx (
   message  : Bytes,
   options ?: MusigOptions
 ) : MusigContext {
-  const { key_tweaks = [] } = options ?? {}
+  const { adaptor_tweaks = [], key_tweaks = [] } = options ?? {}
   let key_ctx = get_key_ctx(pubkeys)
-  if (key_tweaks.length > 0) {
-    key_ctx = tweak_key_ctx(key_ctx, key_tweaks)
-  }
+      key_ctx = tweak_key_ctx(key_ctx, adaptor_tweaks, key_tweaks)
   const nonce_ctx = get_nonce_ctx(nonces, key_ctx.group_pubkey, message)
   return create_ctx(key_ctx, nonce_ctx, options)
 }

@@ -31,29 +31,41 @@ export function get_challenge (
 }
 
 export function get_pt_state (
-  int_pt : PointData,
-  tweaks : Bytes[] = []
+  int_pt   : PointData,
+  adaptors : Bytes[] = [],
+  tweaks   : Bytes[] = []
 ) : PointState {
   // Convert our tweaks to integers.
-  const ints = tweaks.map(e => mod_bytes(e).big)
-  const pos  = BigInt(1)
-  const neg  = _N - pos
+
+  const pos = BigInt(1)
+  const neg = _N - pos
+
+  const twk = tweaks.map(e => mod_bytes(e).big)
+  const pts = [
+    ...twk.map(e => pt.mul(_G, e)),
+    ...adaptors.map(e => pt.lift_x(e, true))
+  ]
 
   let point : PointData | null = int_pt,
       parity = pos, // Handles negation for current round.
       state  = pos, // Tracks negation state across rounds.
       tweak  = 0n   // Stores the accumulated (negated) tweak.
 
-  for (const t of ints) {
+  for (let i = 0; i < pts.length; i++) {
+    // Fetch the point at the current index.
+    const p = pts[i]
     // If point is odd, g should be negative.
     parity = (!pt.is_even(point)) ? neg : pos
     // Invert point based on g, then add tweak.
-    point = pt.add(pt.mul(point, parity), pt.mul(_G, t))
+    point = pt.add(pt.mul(point, parity), p)
     // Assert that point is not null.
     pt.assert_valid(point)
     // Store our progress for the next round.
     state = mod_n(parity * state)
-    tweak = mod_n(t + parity * tweak)
+    // If a private tweak exists, add to the accumulator.
+    if (twk.at(i) !== undefined) {
+      tweak = mod_n(twk[i] + parity * tweak)
+    }
   }
 
   parity = (!pt.is_even(point)) ? neg : pos
