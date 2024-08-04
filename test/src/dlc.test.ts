@@ -1,15 +1,19 @@
-import { Test }    from 'tape'
 import { Buff }    from '@cmdcode/buff'
 import { schnorr } from '@noble/curves/secp256k1'
+import { Test }    from 'tape'
 
 import {
   get_ctx,
   keys,
   musign,
   combine_psigs,
-  verify_musig
+  MusigOptions,
+  verify_adapter_sig,
+  add_sig_adapters
 } from '../../src/index.js'
-import { tweak_pubkey } from '@cmdcode/crypto-tools/keys'
+
+import { get_pubkey } from '@cmdcode/crypto-tools/keys'
+import { gen_seckey } from '@cmdcode/musig2/keys'
 
 export default function (t : Test) {
 
@@ -17,14 +21,16 @@ export default function (t : Test) {
   const encoder = new TextEncoder()
   const message = encoder.encode('Hello world!')
 
-  // Let's create an example list of signers.
+  // Create an example list of signers.
   const signers = [ 'alice', 'bob', 'carol' ]
-  // We'll store each member's wallet in an array.
+  // Store each member's wallet in an array.
   const wallets : any[] = []
-  // Let's also add some additional key tweaks.
-  const tweak1  = Buff.random(32)
-  const tweak2  = Buff.random(32)
-  const options = { key_tweaks : [ tweak1, tweak2 ] }
+
+  // Create an "adaptor" tweak to include in signing.
+  const adaptor_sks = [ gen_seckey(), gen_seckey() ]
+  const adapter_pks = adaptor_sks.map(e => get_pubkey(e, true))
+  // Configure the musig options to include the key tweak.
+  const options : MusigOptions = { nonce_tweaks : adapter_pks }
 
   // Setup a dummy wallet for each signer.
   for (const name of signers) {
@@ -36,50 +42,40 @@ export default function (t : Test) {
     // Create a pair of nonces (numbers only used once).
     const [ sec_nonce, pub_nonce ] = keys.get_nonce_pair(nonce)
     // Add the member's wallet to the array.
-    wallets.push({
-      name, sec_key, pub_key, sec_nonce, pub_nonce
-    })
+    wallets.push({ name, sec_key, pub_key, sec_nonce, pub_nonce })
   }
 
   // Collect public keys and nonces from all signers.
   const group_keys   = wallets.map(e => e.pub_key)
   const group_nonces = wallets.map(e => e.pub_nonce)
 
-  // Combine all your collected keys into a signing session.
-  const ctx1 = get_ctx(group_keys, group_nonces, message, options)
-  const ctx2 = get_ctx(group_keys, group_nonces, message, options)
+  // Create a musig signing context.
+  const ctx = get_ctx(group_keys, group_nonces, message, options)
 
-  // Each member creates their own partial signature,
-  // using their own computed signing session.
+  // Each member signs with the context.
   const group_sigs = wallets.map(wallet => {
     return musign(
-      ctx1,
+      ctx,
       wallet.sec_key,
       wallet.sec_nonce
     )
   })
 
-  // Combine all the partial signatures into our final signature.
-  const signature = combine_psigs(ctx2, group_sigs)
+  // Combine all the partial signatures.
+  const signature = combine_psigs(ctx, group_sigs)
 
-  const null_adapter_pk = ctx1.group_pubkey.hex
+  // Check the un-tweaked signature is valid.
+  const is_valid_untweaked = verify_adapter_sig(ctx, signature, adapter_pks)
 
-  const add_adapter_pk  = tweak_pubkey(ctx1.group_pubkey, [ tweak1 ], true).hex
+  // We can add the tweak to the signature to make it valid.
+  const adapted_sig = add_sig_adapters(ctx, signature, adaptor_sks)
 
-  console.log(null_adapter_pk, add_adapter_pk, ctx2.group_pubkey.hex)
+  // Check if the signature is valid using an independent library.
+  const is_valid_tweaked = schnorr.verify(adapted_sig, message, ctx.group_pubkey)
 
-  // Check if the signature is valid.
-  const isValid1 = verify_musig(ctx2, signature)
-
-  // BONUS: Check if the signature is valid using an independent library.
-  const { group_pubkey } = ctx1
-  const isValid2 = schnorr.verify(signature, message, group_pubkey)
-
-  // console.log(musig.ctx.hexify(ctx))
-
-  t.test('Testing example demo.', t => {
+  t.test('Testing DLC demo.', t => {
     t.plan(2)
-    t.true(isValid1, 'The test demo should produce a valid signature.')
-    t.true(isValid2, 'The signature should validate using another library.')
+    t.true(is_valid_untweaked, 'The un-tweaked signature should be valid.')
+    t.true(is_valid_tweaked,   'The tweaked signature should validate using another library.')
   })
 }

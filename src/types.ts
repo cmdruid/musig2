@@ -44,7 +44,8 @@ export interface KeyContext {
 export interface NonceContext {
   message      : Buff
   pub_nonces   : Buff[]
-  int_nonce    : Buff
+  int_rx       : Buff
+  int_R        : PointState
   group_nonce  : Buff
   nonce_state  : PointState
   nonce_coeff  : Buff

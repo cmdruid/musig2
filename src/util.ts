@@ -1,9 +1,8 @@
-import { Buff, buffer, Bytes }    from '@cmdcode/buff'
-import { CONST, math, PointData } from '@cmdcode/crypto-tools'
-import { convert_32b }            from '@cmdcode/crypto-tools/keys'
-import { pt }                     from '@cmdcode/crypto-tools/math'
-
-import { MusigContext, PartialSig } from './types.js'
+import { Buff, buffer, Bytes } from '@cmdcode/buff'
+import { PointData }           from '@cmdcode/crypto-tools'
+import { convert_32b }         from '@cmdcode/crypto-tools/keys'
+import { pt }                  from '@cmdcode/crypto-tools/math'
+import { PartialSig }          from './types.js'
 
 export function hash_str (str : string) : Buff {
   return Buff.str(str).digest
@@ -40,26 +39,6 @@ export function parse_psig (psig : Bytes) : PartialSig {
     pubkey : keys[1],
     nonces : keys.slice(2)
   }
-}
-
-export function add_sig_adaptors (
-  context   : MusigContext,
-  signature : Bytes,
-  adaptors  : Bytes[]
-) : Buff {
-  const { challenge, group_state } = context
-  const t = adaptors
-    .map(e => Buff.bytes(e).big)
-    .reduce((p, c) => p + c, CONST._0n)
-  const s   = Buff.bytes(signature).subarray(32, 64).big
-  const e   = challenge.big
-  const a   = e * group_state.parity * t
-  const sig = math.mod_n(s + a)
-  // Return the combined signature.
-  return Buff.join([
-    Buff.bytes(signature).subarray(0, 32),
-    Buff.big(sig, 32)
-  ])
 }
 
 export function hexify (item : any) : Buff | Buff[] | any {

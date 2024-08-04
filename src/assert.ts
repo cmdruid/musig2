@@ -2,6 +2,24 @@ import { buffer, Bytes }     from '@cmdcode/buff'
 import { math, PointData }   from '@cmdcode/crypto-tools'
 import { KeyOperationError } from './error.js'
 
+export function ok (
+  value    : unknown,
+  message ?: string
+) : asserts value {
+  if (value === false) {
+    throw new Error(message ?? 'Assertion failed!')
+  }
+}
+
+export function exists <T> (
+  value ?: T | null,
+  msg   ?: string
+  ) : asserts value is NonNullable<T> {
+  if (value === undefined || value === null) {
+    throw new Error(msg ?? 'Value is null or undefined!')
+  }
+}
+
 export function size (
   input : Bytes,
   size  : number

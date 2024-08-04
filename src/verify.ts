@@ -1,6 +1,7 @@
 import { Buff, Bytes }   from '@cmdcode/buff'
 import { CONST }         from '@cmdcode/crypto-tools'
 import { pt }            from '@cmdcode/crypto-tools/math'
+import { get_pt_state }  from './compute.js'
 import { get_key_coeff } from './pubkey.js'
 import { combine_psigs } from './sign.js'
 import { parse_psig }    from './util.js'
@@ -52,4 +53,27 @@ export function verify_musig (
   const SP = pt.add(R, pt.mul(P, c))
   assert.valid_point(S)
   return pt.eq(S, SP)
+}
+
+export function verify_adapter_sig (
+  context     : MusigContext,
+  signature   : Bytes,
+  adapter_pks : Bytes[]
+) : boolean {
+  const { challenge, group_pubkey, group_rx, int_rx } = context
+  const b  = Buff.bytes(signature)
+  const r  = b.subarray(0, 32)
+  const s  = b.subarray(32, 64)
+  assert.ok(group_rx.hex === r.hex, 'signature rx does not match signing context')
+  const R  = pt.lift_x(int_rx, true)
+  const A  = get_pt_state(R, adapter_pks)
+  const ax = pt.to_bytes(A.point).slice(1)
+  assert.ok(group_rx.hex === ax.hex, 'internal rx does not match signing context when tweaked')
+  const c  = challenge.big
+  const P  = pt.lift_x(group_pubkey)
+  const S  = pt.gen(s)
+  const eP = pt.mul(P, c)
+  const rS = pt.sub(S, eP)
+  assert.exists(rS)
+  return rS.x === R.x
 }

@@ -12,7 +12,8 @@ import {
 import {
   apply_sn,
   compute_ps,
-  compute_s
+  compute_s,
+  get_pt_state
 } from './compute.js'
 
 import {
@@ -59,6 +60,23 @@ export function combine_psigs (
   ])
 }
 
+export function add_sig_adapters (
+  context   : MusigContext,
+  signature : Bytes,
+  adapters  : Bytes[]
+) : Buff {
+  const { int_R } = context
+  const s   = Buff.bytes(signature).subarray(32, 64).big
+  const T   = get_pt_state(int_R.point, [], adapters)
+  const a   = T.parity * T.tweak
+  const sig = math.mod_n(s + a)
+  // Return the combined signature.
+  return Buff.join([
+    Buff.bytes(signature).subarray(0, 32),
+    Buff.big(sig, 32)
+  ])
+}
+
 export function musign (
   context : MusigContext,
   secret  : Bytes,
@@ -80,7 +98,7 @@ export function musign (
   // Negate our sec nonce if needed.
   const sn  = Buff.parse(snp, 32, 64).map(e => {
     // Negate our nonce values if needed.
-    return R.parity * e.big
+    return R.parity * R.state * e.big
   })
   // Get partial signature.
   const psig = compute_s(sk, p_v, cha, sn, n_v)

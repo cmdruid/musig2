@@ -18,12 +18,14 @@ export default function (t : Test) {
 
   // Let's create an example list of signers.
   const signers = [ 'alice', 'bob', 'carol' ]
+
   // We'll store each member's wallet in an array.
   const wallets : any[] = []
+
   // Let's also add some additional key tweaks.
   const tweak1  = Buff.random(32)
   const tweak2  = Buff.random(32)
-  const options = { key_tweaks : [ tweak1, tweak2 ] }
+  const options = { pubkey_tweaks : [ tweak1, tweak2 ] }
 
   // Setup a dummy wallet for each signer.
   for (const name of signers) {
@@ -65,6 +67,7 @@ export default function (t : Test) {
 
   // BONUS: Check if the signature is valid using an independent library.
   const { group_pubkey } = ctx
+  
   const isValid2 = schnorr.verify(signature, message, group_pubkey)
 
   // console.log(musig.ctx.hexify(ctx))

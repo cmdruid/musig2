@@ -61,74 +61,113 @@ function key_coeff_test (t : Test, v : Vector) {
   const count = pub_keys.length
   t.test('key_coeff_test', t => {
     t.plan(count)
-    for (let i = 0; i < count; i++) {
-      const ret = compute_key_coeff(pub_keys, pub_keys[i])
-      t.equal(ret.hex, key_coeffs[i], 'Key coefficient hash should match.')
+    try {
+      for (let i = 0; i < count; i++) {
+        const ret = compute_key_coeff(pub_keys, pub_keys[i])
+        t.equal(ret.hex, key_coeffs[i], 'Key coefficient hash should match.')
+      }
+    } catch (err) {
+      const { message } = err as Error
+      t.fail(message)
+      t.end()
     }
   })
 }
 
 function combine_keys_test (t : Test, v : Vector) {
-  const { group, group_pubkey } = v
-  const [ P ] = combine_pubkeys(group.pub_keys)
-  const ret = pt.to_bytes(P).slice(1)
   t.test('combine_pubkeys_test', t => {
-    t.plan(1)
-    t.equal(ret.hex, group_pubkey, 'Group pubkey should equal target.')
+    try {
+      t.plan(1)
+      const { group, group_pubkey } = v
+      const [ P ] = combine_pubkeys(group.pub_keys)
+      const ret = pt.to_bytes(P).slice(1)
+      t.equal(ret.hex, group_pubkey, 'Group pubkey should equal target.')
+    } catch (err) {
+      const { message } = err as Error
+      t.fail(message)
+      t.end()
+    }
   })
 }
 
 function combine_nonces_test (t : Test, v : Vector) {
-  const { group, group_nonce } = v
-  const ret = combine_nonces(group.pub_nonces)
   t.test('combine_nonces_test', t => {
-    t.plan(1)
-    t.equal(ret.hex, group_nonce, 'Group nonce should equal target.')
+    try {
+      t.plan(1)
+      const { group, group_nonce } = v
+      const ret = combine_nonces(group.pub_nonces)
+      t.equal(ret.hex, group_nonce, 'Group nonce should equal target.')
+    } catch (err) {
+      const { message } = err as Error
+      t.fail(message)
+      t.end()
+    }
   })
 }
 
 function nonce_coeff_test (t : Test, v : Vector) {
-  const { group_nonce, group_pubkey, chall_mesg, nonce_coeff } = v
-  const ret = get_nonce_coeff(group_nonce, group_pubkey, chall_mesg)
   t.test('nonce_coeff_test', t => {
-    t.plan(1)
-    t.equal(ret.hex, nonce_coeff, 'Nonce coefficient hash should match.')
+    try {
+      t.plan(1)
+      const { group_nonce, group_pubkey, chall_mesg, nonce_coeff } = v
+      const ret = get_nonce_coeff(group_nonce, group_pubkey, chall_mesg)
+      t.equal(ret.hex, nonce_coeff, 'Nonce coefficient hash should match.')
+    } catch (err) {
+      const { message } = err as Error
+      t.fail(message)
+      t.end()
+    }
   })
 }
 
 function compute_R_test (t : Test, v : Vector) {
-  const { group_nonce, nonce_coeff, group_rx } = v
-  const R = compute_R(group_nonce, nonce_coeff)
-  const ret = pt.to_bytes(R)
   t.test('compute_R_test', t => {
-    t.plan(1)
-    t.equal(ret.slice(1).hex, group_rx, 'R.x value hex should match.')
+    try {
+      t.plan(1)
+      const { group_nonce, nonce_coeff, group_rx } = v
+      const R = compute_R(group_nonce, nonce_coeff)
+      const ret = pt.to_bytes(R)
+      t.equal(ret.slice(1).hex, group_rx, 'R.x value hex should match.')
+    } catch (err) {
+      const { message } = err as Error
+      t.fail(message)
+      t.end()
+    }
   })
 }
 
 function compute_challenge_test (t : Test, v : Vector) {
-  const { group_rx, group_pubkey, chall_mesg, chall_hash } = v
-  const ret = get_challenge(group_rx, group_pubkey, chall_mesg)
-
   t.test('compute_challenge_test', t => {
-    t.plan(1)
-    t.equal(ret.hex, chall_hash, 'Challenge hash should match.')
+    try {
+      t.plan(1)
+      const { group_rx, group_pubkey, chall_mesg, chall_hash } = v
+      const ret = get_challenge(group_rx, group_pubkey, chall_mesg)
+      t.equal(ret.hex, chall_hash, 'Challenge hash should match.')
+    } catch (err) {
+      const { message } = err as Error
+      t.fail(message)
+      t.end()
+    }
   })
 }
 
 function sign_test (t : Test, v : Vector) {
-  const { group, chall_mesg, opt } = v
-  const { pub_keys, pub_nonces, sec_nonces, sec_keys, signatures } = group
-  const rounds = group.pub_keys.length
-
-  const ctx = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
-
   t.test('sign_test', t => {
-    t.plan(rounds)
-    for (let i = 0; i < rounds; i++) {
-      const target = signatures[i]
-      const sig = musign(ctx, sec_keys[i], sec_nonces[i])
-      t.equal(sig.hex, target, `Signatures for member ${i+1} should match.`)
+    const { group, chall_mesg, opt } = v
+    const { pub_keys, pub_nonces, sec_nonces, sec_keys, signatures } = group
+    const rounds = group.pub_keys.length
+    try {
+      t.plan(rounds)
+      const ctx = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
+      for (let i = 0; i < rounds; i++) {
+        const target = signatures[i]
+        const sig = musign(ctx, sec_keys[i], sec_nonces[i])
+        t.equal(sig.hex, target, `Signatures for member ${i+1} should match.`)
+      }
+    } catch (err) {
+      const { message } = err as Error
+      t.fail(message)
+      t.end()
     }
   })
 }
@@ -136,11 +175,17 @@ function sign_test (t : Test, v : Vector) {
 function combine_sigs_test (t : Test, v : Vector) {
   const { group, group_sig, chall_mesg, opt } = v
   const { pub_keys, pub_nonces } = group
-  const session = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
-  const ret = combine_psigs(session, group.signatures)
   t.test('combine_s_test', t => {
-    t.plan(1)
-    t.equal(ret.slice(32, 64).hex, group_sig, 'Combined s values should match.')
+    try {
+      t.plan(1)
+      const session = get_ctx(pub_keys, pub_nonces, chall_mesg, opt)
+      const ret = combine_psigs(session, group.signatures)
+      t.equal(ret.slice(32, 64).hex, group_sig, 'Combined s values should match.')
+    } catch (err) {
+      const { message } = err as Error
+      t.fail(message)
+      t.end()
+    }
   })
 }
 
