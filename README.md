@@ -56,7 +56,7 @@ import * as musig from '@cmdcode/musig2'
   // Let's also add some additional key tweaks.
   const tweak1  = musig.util.random(32)
   const tweak2  = musig.util.random(32)
-  const options = { key_tweaks : [ tweak1, tweak2 ] }
+  const options = { pubkey_tweaks : [ tweak1, tweak2 ] }
 
   // Setup a dummy wallet for each signer.
   for (const name of signers) {
