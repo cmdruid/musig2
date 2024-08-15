@@ -43,7 +43,7 @@ export function get_pt_state (
   const twk = tweaks.map(e => mod_bytes(e).big)
   const pts = [
     ...twk.map(e => pt.mul(_G, e)),
-    ...adaptors.map(e => pt.lift_x(e, true))
+    ...adaptors.map(e => pt.lift_x(e))
   ]
 
   let point : PointData | null = int_pt,

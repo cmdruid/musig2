@@ -12,8 +12,7 @@ import {
   add_sig_adapters
 } from '../../src/index.js'
 
-import { get_pubkey } from '@cmdcode/crypto-tools/keys'
-import { gen_seckey } from '@cmdcode/musig2/keys'
+import { gen_seckey, get_pubkey } from '@cmdcode/crypto-tools/keys'
 
 export default function (t : Test) {
 
@@ -28,7 +27,7 @@ export default function (t : Test) {
 
   // Create an "adaptor" tweak to include in signing.
   const adaptor_sks = [ gen_seckey(), gen_seckey() ]
-  const adapter_pks = adaptor_sks.map(e => get_pubkey(e, true))
+  const adapter_pks = adaptor_sks.map(e => get_pubkey(e))
   // Configure the musig options to include the key tweak.
   const options : MusigOptions = { nonce_tweaks : adapter_pks }
 
